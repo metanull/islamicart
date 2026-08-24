@@ -8,6 +8,5 @@ permissions:
 jobs:
   ci:
     uses: metanull/viewer-workflows/.github/workflows/website-ci.yml@v1
-    secrets: inherit
   locales:
     uses: metanull/viewer-workflows/.github/workflows/locale-validate.yml@v1

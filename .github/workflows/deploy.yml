@@ -10,4 +10,3 @@ permissions:
 jobs:
   deploy:
     uses: metanull/viewer-workflows/.github/workflows/website-deploy-pages.yml@v1
-    secrets: inherit

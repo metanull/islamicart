@@ -14,9 +14,12 @@ combines three `@metanull` packages from GitHub Packages:
 | `@metanull/viewer-core` | application engine (routing, data access, i18n) |
 | `@metanull/viewer-layout` | page structure (`PageShell` + sections), themed via `theme/tokens.css` |
 
-Because the data package is private, every `npm install` — locally and in CI —
-needs a token with `read:packages` (locally via `NODE_AUTH_TOKEN`, in CI via
-the `PACKAGES_READ_TOKEN` repository secret).
+Because the data package is private, every `npm install` needs authenticated
+access to GitHub Packages. In CI there is nothing to configure: the package
+grants this repository Read under *Manage Actions access*, so the workflow's
+built-in `github.token` can install it — no secret, no PAT. Locally, each
+developer authenticates for themselves, with `npm login --registry=https://npm.pkg.github.com`
+or a personal `~/.npmrc`; the Docker preview reads the token from `.env`.
 
 ---
 
