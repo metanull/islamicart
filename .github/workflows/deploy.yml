@@ -1,0 +1,13 @@
+name: Deploy
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+  packages: read
+  pages: write
+  id-token: write
+jobs:
+  deploy:
+    uses: metanull/viewer-workflows/.github/workflows/website-deploy-pages.yml@v1
+    secrets: inherit
