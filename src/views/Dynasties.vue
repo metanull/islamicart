@@ -55,26 +55,26 @@ function dateRangeLabel(d) {
 
 <template>
   <div>
-    <h1 class="section-heading">Islamic Dynasties</h1>
+    <h1 class="section-heading">{{ $t('islamicart.dynasty.heading') }}</h1>
 
     <div class="content-box">
       <h2 class="intro-heading">{{ introHeading }}</h2>
       <div class="intro-text" v-html="md(introBody)"></div>
 
       <div class="dynasty-quicknav">
-        <label for="dynasty-quicknav-select" class="quicknav-label">Jump to a dynasty:</label>
+        <label for="dynasty-quicknav-select" class="quicknav-label">{{ $t('islamicart.dynasty.jumpTo') }}</label>
         <select
           id="dynasty-quicknav-select"
           class="quicknav-select"
           @change="goToDynasty($event.target.value)"
         >
-          <option value="">Select a dynasty…</option>
+          <option value="">{{ $t('islamicart.dynasty.selectPrompt') }}</option>
           <option v-for="d in dynastyList" :key="d.id" :value="d.id">{{ d.name }}</option>
         </select>
       </div>
 
       <p class="result-count">
-        {{ dynastyList.length }} dynast{{ dynastyList.length !== 1 ? 'ies' : 'y' }}
+        {{ $t('islamicart.results.dynastiesFound') }}: {{ dynastyList.length }}
       </p>
 
       <ul v-if="dynastyList.length" class="dynasty-list">
@@ -87,14 +87,14 @@ function dateRangeLabel(d) {
           <div class="dynasty-date">{{ dateRangeLabel(d) }}</div>
           <div class="dynasty-body">
             <div class="dynasty-name">{{ d.name }}</div>
-            <div v-if="d.also_known_as" class="dynasty-aka">also known as {{ d.also_known_as }}</div>
+            <div v-if="d.also_known_as" class="dynasty-aka">{{ $t('islamicart.dynasty.alsoKnownAs') }} {{ d.also_known_as }}</div>
             <div v-if="d.area" class="dynasty-area">{{ d.area }}</div>
           </div>
-          <div class="dynasty-count">{{ d.itemCount }} item{{ d.itemCount !== 1 ? 's' : '' }}</div>
+          <div class="dynasty-count">{{ $t('islamicart.results.itemsLabel') }}: {{ d.itemCount }}</div>
         </li>
       </ul>
 
-      <p v-else class="no-results">No dynasties found.</p>
+      <p v-else class="no-results">{{ $t('islamicart.results.noDynasties') }}</p>
     </div>
   </div>
 </template>

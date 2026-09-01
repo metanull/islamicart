@@ -1,23 +1,28 @@
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { I18nText, useI18n } from '@metanull/viewer-core'
 import { useInventoryData } from '../composables/useInventoryData.js'
 
 const router = useRouter()
 const { availableLangs } = useInventoryData()
+const { t } = useI18n()
 
-// Matches legacy database.php's 9 field options exactly, in order.
-const FIELD_OPTIONS = [
-  { value: 'keyword',    label: 'Keyword(s)' },
-  { value: 'name',       label: 'Name' },
-  { value: 'location',   label: 'Location' },
-  { value: 'provenance', label: 'Provenance' },
-  { value: 'dynasty',    label: 'Period / Dynasty' },
-  { value: 'patron',     label: 'Patron / Initial Owner' },
-  { value: 'artist',     label: 'Architect / Artist / Master' },
-  { value: 'material',   label: 'Material / Technique' },
-  { value: 'other',      label: 'Other' },
-]
+// Matches legacy database.php's 9 field options exactly, in order. `value` is
+// the query parameter and never a text; only `label` is one, which is why each
+// name is written out here rather than derived from the value — the check that
+// every name resolves can only see the ones it can read.
+const FIELD_OPTIONS = computed(() => [
+  { value: 'keyword',    label: t('islamicart.field.keywords') },
+  { value: 'name',       label: t('islamicart.field.name') },
+  { value: 'location',   label: t('islamicart.field.location') },
+  { value: 'provenance', label: t('islamicart.field.provenance') },
+  { value: 'dynasty',    label: t('islamicart.field.dynasty') },
+  { value: 'patron',     label: t('islamicart.field.patron') },
+  { value: 'artist',     label: t('islamicart.field.artist') },
+  { value: 'material',   label: t('islamicart.field.material') },
+  { value: 'other',      label: t('islamicart.field.other') },
+])
 
 // Legacy's fixed century-boundary date dropdowns (database.php:88-124).
 // "From" runs 501-2001 (16 values), "to" runs 600-2000 (15 values) — not symmetric.
@@ -60,55 +65,51 @@ function showAll() {
 
 <template>
   <div>
-    <h1 class="section-heading">Database</h1>
+    <h1 class="section-heading">{{ $t('islamicart.nav.database') }}</h1>
 
     <div class="content-box">
-      <p class="intro-text">
-        Search the collection by one or more keywords. Select the field to search in and
-        enter a keyword for each row. Leave a row blank to ignore it.
-        Optionally restrict results to a date range and/or a search language.
-      </p>
+      <I18nText tag="p" class="intro-text" keypath="islamicart.search.intro" />
 
       <table class="form-table db-form">
         <tbody>
           <!-- Row 1 -->
           <tr>
-            <th>Keyword 1</th>
+            <th>{{ $t('islamicart.search.keywordOne') }}</th>
             <td>
               <select v-model="field1" style="width:200px">
                 <option v-for="f in FIELD_OPTIONS" :key="f.value" :value="f.value">{{ f.label }}</option>
               </select>
-              <input type="text" v-model="keyword1" placeholder="keyword…" style="width:220px; margin-left:8px" />
+              <input type="text" v-model="keyword1" :placeholder="$t('islamicart.search.keywordPlaceholder')" style="width:220px; margin-left:8px" />
             </td>
           </tr>
 
           <!-- Row 2 -->
           <tr>
-            <th>Keyword 2</th>
+            <th>{{ $t('islamicart.search.keywordTwo') }}</th>
             <td>
               <select v-model="cond2" style="width:60px">
-                <option value="AND">AND</option>
-                <option value="OR">OR</option>
+                <option value="AND">{{ $t('islamicart.search.and') }}</option>
+                <option value="OR">{{ $t('islamicart.search.or') }}</option>
               </select>
               <select v-model="field2" style="width:200px; margin-left:8px">
                 <option v-for="f in FIELD_OPTIONS" :key="f.value" :value="f.value">{{ f.label }}</option>
               </select>
-              <input type="text" v-model="keyword2" placeholder="keyword…" style="width:220px; margin-left:8px" />
+              <input type="text" v-model="keyword2" :placeholder="$t('islamicart.search.keywordPlaceholder')" style="width:220px; margin-left:8px" />
             </td>
           </tr>
 
           <!-- Row 3 -->
           <tr>
-            <th>Keyword 3</th>
+            <th>{{ $t('islamicart.search.keywordThree') }}</th>
             <td>
               <select v-model="cond3" style="width:60px">
-                <option value="AND">AND</option>
-                <option value="OR">OR</option>
+                <option value="AND">{{ $t('islamicart.search.and') }}</option>
+                <option value="OR">{{ $t('islamicart.search.or') }}</option>
               </select>
               <select v-model="field3" style="width:200px; margin-left:8px">
                 <option v-for="f in FIELD_OPTIONS" :key="f.value" :value="f.value">{{ f.label }}</option>
               </select>
-              <input type="text" v-model="keyword3" placeholder="keyword…" style="width:220px; margin-left:8px" />
+              <input type="text" v-model="keyword3" :placeholder="$t('islamicart.search.keywordPlaceholder')" style="width:220px; margin-left:8px" />
             </td>
           </tr>
 
@@ -120,7 +121,7 @@ function showAll() {
             <td>
               <label class="epm-toggle">
                 <input type="checkbox" v-model="includeEpm" />
-                Include Explore Islamic Art Collections
+                {{ $t('islamicart.filter.includeEpm') }}
               </label>
             </td>
           </tr>
@@ -129,7 +130,7 @@ function showAll() {
 
           <!-- Date range -->
           <tr>
-            <th>Date (from year)</th>
+            <th>{{ $t('islamicart.search.dateFrom') }}</th>
             <td>
               <select v-model="dateFrom" style="width:120px">
                 <option value="">—</option>
@@ -138,7 +139,7 @@ function showAll() {
             </td>
           </tr>
           <tr>
-            <th>Date (to year)</th>
+            <th>{{ $t('islamicart.search.dateTo') }}</th>
             <td>
               <select v-model="dateTo" style="width:120px">
                 <option value="">—</option>
@@ -149,10 +150,10 @@ function showAll() {
 
           <!-- Search language -->
           <tr>
-            <th>Search language</th>
+            <th>{{ $t('islamicart.search.language') }}</th>
             <td>
               <select v-model="searchLanguage" style="width:120px">
-                <option value="">Any</option>
+                <option value="">{{ $t('islamicart.search.anyLanguage') }}</option>
                 <option v-for="lang in availableLangs" :key="lang" :value="lang">{{ lang.toUpperCase() }}</option>
               </select>
             </td>
@@ -162,8 +163,8 @@ function showAll() {
           <tr>
             <th></th>
             <td style="padding-top:14px">
-              <button class="btn" @click="search">Search</button>
-              <button class="btn btn-secondary" style="margin-left:10px" @click="showAll">Show All</button>
+              <button class="btn" @click="search">{{ $t('islamicart.action.search') }}</button>
+              <button class="btn btn-secondary" style="margin-left:10px" @click="showAll">{{ $t('islamicart.action.showAll') }}</button>
             </td>
           </tr>
         </tbody>

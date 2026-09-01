@@ -1,5 +1,6 @@
 <script setup>
 import { useRouter } from 'vue-router'
+import { I18nText } from '@metanull/viewer-core'
 
 const router = useRouter()
 
@@ -10,28 +11,23 @@ function browse(type, project) {
 
 <template>
   <div>
-    <h1 class="section-heading">Partners</h1>
+    <h1 class="section-heading">{{ $t('islamicart.nav.partners') }}</h1>
 
     <div class="content-box">
-      <p class="intro-text">
-        Discover Islamic Art is a collaborative project bringing together museums and
-        institutions from across the Islamic world and beyond. Browse the partner
-        museums that lend and hold the objects in the collection, or the partner
-        institutions responsible for the monuments and historic sites.
-      </p>
+      <I18nText tag="p" class="intro-text" keypath="islamicart.partner.introDiscover" />
 
       <table class="form-table filter-table">
         <tbody>
           <tr>
-            <th><label>Partner Museums</label></th>
+            <th><label>{{ $t('islamicart.partner.museums') }}</label></th>
             <td>
-              <button class="btn" @click="browse('museum', 'ISL')">Browse Museums →</button>
+              <button class="btn" @click="browse('museum', 'ISL')">{{ $t('islamicart.action.browseMuseums') }} →</button>
             </td>
           </tr>
           <tr>
-            <th><label>Other Partners</label></th>
+            <th><label>{{ $t('islamicart.partner.others') }}</label></th>
             <td>
-              <button class="btn" @click="browse('institution', 'ISL')">Browse Institutions →</button>
+              <button class="btn" @click="browse('institution', 'ISL')">{{ $t('islamicart.action.browseInstitutions') }} →</button>
             </td>
           </tr>
         </tbody>
@@ -39,23 +35,20 @@ function browse(type, project) {
     </div>
 
     <div class="content-box">
-      <p class="intro-text">
-        Explore Islamic Art Collections brings together further museums and institutions
-        beyond the core Discover Islamic Art network.
-      </p>
+      <I18nText tag="p" class="intro-text" keypath="islamicart.partner.introExplore" />
 
       <table class="form-table filter-table">
         <tbody>
           <tr>
-            <th><label>Partner Museums</label></th>
+            <th><label>{{ $t('islamicart.partner.museums') }}</label></th>
             <td>
-              <button class="btn" @click="browse('museum', 'EPM')">Browse Museums →</button>
+              <button class="btn" @click="browse('museum', 'EPM')">{{ $t('islamicart.action.browseMuseums') }} →</button>
             </td>
           </tr>
           <tr>
-            <th><label>Other Partners</label></th>
+            <th><label>{{ $t('islamicart.partner.others') }}</label></th>
             <td>
-              <button class="btn" @click="browse('institution', 'EPM')">Browse Institutions →</button>
+              <button class="btn" @click="browse('institution', 'EPM')">{{ $t('islamicart.action.browseInstitutions') }} →</button>
             </td>
           </tr>
         </tbody>

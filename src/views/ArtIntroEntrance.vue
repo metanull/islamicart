@@ -20,11 +20,11 @@ const themeList = computed(() =>
 
 <template>
   <div v-if="!artIntroRoot" class="content-box not-found">
-    <p>Artistic Introduction is not available.</p>
+    <p>{{ $t('islamicart.notFound.artIntro') }}</p>
   </div>
 
   <div v-else>
-    <h1 class="section-heading">Artistic Introduction</h1>
+    <h1 class="section-heading">{{ $t('islamicart.nav.artisticIntroduction') }}</h1>
 
     <div class="content-box intro-box">
       <h2 v-if="rootText.extra?.subtitle" class="intro-subtitle" v-html="mdInline(rootText.extra.subtitle)" />
@@ -33,9 +33,7 @@ const themeList = computed(() =>
     </div>
 
     <div class="content-box">
-      <p class="intro-text">
-        Select a theme below to explore its monuments and objects.
-      </p>
+      <p class="intro-text">{{ $t('islamicart.artIntro.selectTheme') }}</p>
       <ul class="theme-list">
         <li
           v-for="theme in themeList"

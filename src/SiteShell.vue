@@ -2,15 +2,40 @@
 // PageShell with the legacy MWNF header lockup ("Museum With No Frontiers"
 // over "Islamic Art") supplied through the header slot. All other PageShell
 // props and the update:language event pass through untouched via $attrs.
+import { computed } from 'vue'
+import { useI18n } from '@metanull/viewer-core'
 import { PageShell } from '@metanull/viewer-layout'
+
+const { t } = useI18n()
+
+// The menu is built here rather than in dataset.config.js because a label is a
+// text and a text is only available inside the application: `t` needs the
+// installed catalogue, and every name has to be written out where it is used
+// so `viewer-i18n-check` can see it. The config keeps what is not a text —
+// the offered languages — and PageShell receives these links after $attrs, so
+// they take precedence over anything the config still passes.
+const navLinks = computed(() => [
+  { label: t('core.nav.home'), href: '#/' },
+  { label: t('islamicart.nav.permanentCollection'), href: '#/permanent-collection' },
+  { label: t('islamicart.nav.database'), href: '#/database' },
+  { label: t('islamicart.nav.timeline'), href: '#/timeline' },
+  { label: t('islamicart.nav.partners'), href: '#/partners' },
+  { label: t('islamicart.nav.dynasties'), href: '#/dynasties' },
+  { label: t('islamicart.nav.artisticIntroduction'), href: '#/artistic-introduction' },
+  { label: t('islamicart.nav.exhibitions'), href: '#/exhibitions' },
+])
 </script>
 
 <template>
-  <PageShell v-bind="$attrs">
+  <PageShell
+    v-bind="$attrs"
+    :nav-links="navLinks"
+    :footer-text="$t('islamicart.identity.copyright')"
+  >
     <template #header>
       <a class="site-logo" href="#/">
-        <span class="site-logo-org">Museum With No Frontiers</span>
-        <span class="site-logo-title">Islamic Art</span>
+        <span class="site-logo-org">{{ $t('islamicart.identity.organisation') }}</span>
+        <span class="site-logo-title">{{ $t('islamicart.identity.title') }}</span>
       </a>
     </template>
     <slot />

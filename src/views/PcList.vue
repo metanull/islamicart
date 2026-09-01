@@ -1,10 +1,12 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from '@metanull/viewer-core'
 import { useInventoryData } from '../composables/useInventoryData.js'
 
 const route = useRoute()
 const router = useRouter()
+const { t } = useI18n()
 const {
   items, countries, partners, dynasties,
   countryLabel, dynastyLabel, partnerLabel,
@@ -166,79 +168,82 @@ function goToPage(n) {
 
 // ── Active filter label ───────────────────────────────────────────────
 
+// null when nothing is filtered, so the heading's suffix is driven by the
+// absence of a filter rather than by comparing against a text — a comparison
+// that would stop being true the moment the text is translated.
 const activeFilterLabel = computed(() => {
   if (filterCountry.value) return countryLabel(filterCountry.value)
   if (filterDynasty.value) return dynastyLabel(filterDynasty.value)
   if (filterPartner.value) return partnerLabel(filterPartner.value)
-  if (filterBegin.value)   return `from ${filterBegin.value}`
-  if (filterEnd.value)     return `up to ${filterEnd.value}`
-  return 'All Items'
+  if (filterBegin.value)   return `${t('islamicart.filter.from')} ${filterBegin.value}`
+  if (filterEnd.value)     return `${t('islamicart.filter.upTo')} ${filterEnd.value}`
+  return null
 })
 </script>
 
 <template>
   <div>
     <h1 class="section-heading">
-      Permanent Collection
-      <span v-if="activeFilterLabel !== 'All Items'" class="heading-filter"> — {{ activeFilterLabel }}</span>
+      {{ $t('islamicart.nav.permanentCollection') }}
+      <span v-if="activeFilterLabel" class="heading-filter"> — {{ activeFilterLabel }}</span>
     </h1>
 
     <!-- Filter panel -->
     <div class="content-box filter-panel">
-      <strong class="filter-label">Filter:</strong>
+      <strong class="filter-label">{{ $t('islamicart.filter.heading') }}</strong>
 
       <div class="filter-row">
-        <label>Country</label>
+        <label>{{ $t('islamicart.filter.country') }}</label>
         <select v-model="filterCountry" style="width:200px">
-          <option value="">— any —</option>
+          <option value="">{{ $t('islamicart.filter.any') }}</option>
           <option v-for="c in availableCountries" :key="c.id" :value="c.id">{{ c.name }}</option>
         </select>
       </div>
 
       <div class="filter-row">
-        <label>Period / Dynasty</label>
+        <label>{{ $t('islamicart.filter.periodDynasty') }}</label>
         <select v-model="filterDynasty" style="width:200px">
-          <option value="">— any —</option>
+          <option value="">{{ $t('islamicart.filter.any') }}</option>
           <option v-for="d in availableDynasties" :key="d.id" :value="d.id">{{ d.name }}</option>
         </select>
       </div>
 
       <div class="filter-row">
-        <label>Holding Institution</label>
+        <label>{{ $t('islamicart.filter.holdingInstitution') }}</label>
         <select v-model="filterPartner" style="width:200px">
-          <option value="">— any —</option>
+          <option value="">{{ $t('islamicart.filter.any') }}</option>
           <option v-for="p in availablePartners" :key="p.id" :value="p.id">{{ p.name }}</option>
         </select>
       </div>
 
       <div class="filter-row">
-        <label>From year</label>
-        <input type="number" v-model="filterBegin" placeholder="e.g. 800" style="width:100px" />
+        <label>{{ $t('islamicart.filter.fromYear') }}</label>
+        <input type="number" v-model="filterBegin" :placeholder="$t('islamicart.filter.fromYearHint')" style="width:100px" />
       </div>
 
       <div class="filter-row">
-        <label>To year</label>
-        <input type="number" v-model="filterEnd" placeholder="e.g. 1400" style="width:100px" />
+        <label>{{ $t('islamicart.filter.toYear') }}</label>
+        <input type="number" v-model="filterEnd" :placeholder="$t('islamicart.filter.toYearHint')" style="width:100px" />
       </div>
 
       <div class="filter-row">
         <label class="epm-toggle">
           <input type="checkbox" v-model="includeEpm" />
-          Include Explore Islamic Art Collections
+          {{ $t('islamicart.filter.includeEpm') }}
         </label>
       </div>
 
       <div class="filter-actions">
-        <button class="btn" @click="applyFilters">Apply</button>
-        <button class="btn btn-secondary" style="margin-left:8px" @click="resetFilters">Reset</button>
+        <button class="btn" @click="applyFilters">{{ $t('islamicart.action.apply') }}</button>
+        <button class="btn btn-secondary" style="margin-left:8px" @click="resetFilters">{{ $t('islamicart.action.reset') }}</button>
       </div>
     </div>
 
     <!-- Results -->
     <div class="content-box">
       <p class="result-count">
-        {{ resultCounts.objects }} object{{ resultCounts.objects !== 1 ? 's' : '' }},
-        {{ resultCounts.monuments }} monument{{ resultCounts.monuments !== 1 ? 's' : '' }}
+        {{ $t('islamicart.results.objectsFound') }}: {{ resultCounts.objects }},
+        {{ $t('islamicart.results.monumentsFound') }}: {{ resultCounts.monuments }}
       </p>
 
       <ul v-if="pagedItems.length" class="item-list">
@@ -265,14 +270,14 @@ const activeFilterLabel = computed(() => {
         </li>
       </ul>
 
-      <p v-else class="no-results">No items match the selected filter.</p>
+      <p v-else class="no-results">{{ $t('islamicart.results.noItemsFilter') }}</p>
 
       <!-- Pagination -->
       <div v-if="totalPages > 1" class="pagination">
         <span class="pagination-info">
-          Page {{ currentPage }} of {{ totalPages }}
+          {{ currentPage }} / {{ totalPages }}
         </span>
-        <button class="page-btn" :disabled="currentPage === 1" @click="goToPage(currentPage - 1)">‹ Prev</button>
+        <button class="page-btn" :disabled="currentPage === 1" @click="goToPage(currentPage - 1)">‹ {{ $t('core.pagination.previous') }}</button>
         <template v-for="p in totalPages" :key="p">
           <button
             v-if="Math.abs(p - currentPage) <= 3 || p === 1 || p === totalPages"
@@ -282,7 +287,7 @@ const activeFilterLabel = computed(() => {
           >{{ p }}</button>
           <span v-else-if="Math.abs(p - currentPage) === 4" class="page-ellipsis">…</span>
         </template>
-        <button class="page-btn" :disabled="currentPage === totalPages" @click="goToPage(currentPage + 1)">Next ›</button>
+        <button class="page-btn" :disabled="currentPage === totalPages" @click="goToPage(currentPage + 1)">{{ $t('core.pagination.next') }} ›</button>
       </div>
     </div>
   </div>

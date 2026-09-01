@@ -6,12 +6,13 @@ database, country timelines, partners, dynasties, artistic introduction and
 virtual exhibitions, built from the published dataset.
 
 A website is a light, static Vue 3 front-end for one published dataset. It
-combines three `@metanull` packages from GitHub Packages:
+combines four `@metanull` packages from GitHub Packages:
 
 | Package | Role |
 | --- | --- |
 | `@metanull/islamicart-data` | the dataset (JSON + `manifest.json`, **private**) |
-| `@metanull/viewer-core` | application engine (routing, data access, i18n) |
+| `@metanull/viewer-core` | application engine (routing, data access, the text runtime and the language service) |
+| `@metanull/viewer-i18n` | the texts shared with the other websites (this one receives the `standalone` bundle: `core` + `layout`) |
 | `@metanull/viewer-layout` | page structure (`PageShell` + sections), themed via `theme/tokens.css` |
 
 Because the data package is private, every `npm install` needs authenticated
@@ -26,28 +27,38 @@ or a personal `~/.npmrc`; the Docker preview mounts that `~/.npmrc` read-only.
 ## Translator — editing the website's texts
 
 You only need a GitHub account and a browser. The files under `locales/` hold
-the interface texts (menu labels, buttons, messages), one file per language —
-`en.json` is English, `fr.json` French, and so on. The museum content itself
-arrives already translated and is not edited here.
+**this website's own texts**, one file per language — `en.json` is English,
+`fr.json` French, and so on.
+
+Texts shared with the other MWNF websites — the skip link, the language
+chooser, the words "Home", "Previous" and "Next" — are not here: they live in
+[`viewer-i18n`](https://github.com/metanull/viewer-i18n) and are edited there,
+the same way. This website can override any of them by writing the same entry
+name in its own file. The museum content itself arrives already translated and
+is not edited anywhere.
 
 1. **Open the folder.** Bookmark this link on the website's GitHub page:
    `locales/`. Click the language file you want to change.
 2. **Click the pencil** (✏️, top right of the file view). The file opens in an
    editable text box. Change only the text between the second pair of
-   quotation marks on a line — the part before the colon is the identifier
-   and must stay exactly as it is. Pieces in curly braces like `{page}` are
-   filled automatically — keep them, but you may move them within the
-   sentence.
+   quotation marks on a line — the part before the colon is the name of the
+   entry and must stay exactly as it is.
 3. **To start a new language**, open `en.json`, copy all of its content, then
    create the new file (Add file → Create new file) named with the two-letter
-   language code, e.g. `ar.json`, paste, and translate the texts.
+   language code, e.g. `ar.json`, paste, and translate the texts. A language
+   does not have to be complete: anything you have not translated shows in
+   English.
 4. **Click "Commit changes…" then "Propose changes".** GitHub asks nothing
    else — it saves your edit as a proposal.
 5. **Wait for the automatic check.** After a minute or two, the proposal page
    shows a green tick and your change goes live on the website by itself a few
-   minutes later. If something is off (a missing quote, a forgotten `{page}`),
-   a comment appears explaining in plain language what to fix — edit again on
-   the same page and the check reruns.
+   minutes later. If something is off, a comment appears explaining in plain
+   language what to fix — edit again on the same page and the check reruns.
+
+A text is **just text**, formatted with Markdown if you want: `**bold**`,
+`*italic*`, `[a link](https://example.org)`. It may not contain HTML tags, and
+it may not contain `{` or `}` — nothing is ever inserted into a text, so a
+number or a date is placed next to it by the website rather than inside it.
 
 ---
 
@@ -96,18 +107,28 @@ For real design work, use the live preview:
 
 - `src/dataset.config.js` is the website's whole declaration: dataset
   package, content languages (derived from the translation files actually
-  present), page shell + navigation, and the full route map (`extraViews`) —
-  one view per page under `src/views/`.
+  present), page shell, and the full route map (`extraViews`) — one view per
+  page under `src/views/`. It holds nothing that is a text: the menu labels and
+  the footer line are built in `SiteShell.vue`, where the texts are installed.
 - `src/composables/useInventoryData.js` is the website's data layer over the
   dataset package: entity singletons, English label helpers, lazy per-language
   translation loading, the collection-tree anchors (artistic introduction,
   exhibitions) and the markdown helpers (`md`, `mdInline`, `mdStrip`).
-- The **global language switcher** (nav bar) sets the vue-i18n locale; content
-  views derive their display language from it and lazy-load the matching
-  `translations/<entity>.<lang>.json`. List/search views render English
-  labels, as the legacy site did.
-- `src/SiteShell.vue` wraps `PageShell` only to supply the legacy header
-  lockup through the `header` slot; everything else passes through.
+- The **global language switcher** (nav bar) sets the one language the
+  application has, held by `viewer-core`. It is both the language of the
+  chrome and the content language: views derive their display language from it
+  and lazy-load the matching `translations/<entity>.<lang>.json`. List/search
+  views render English labels, as the legacy site did.
+- `src/main.js` merges the shared bundle with `locales/*.json` — the local
+  file last, because local wins. That is the only merge rule there is.
+- `src/SiteShell.vue` supplies the legacy header lockup through `PageShell`'s
+  `header` slot, and builds the menu and the footer line from texts;
+  everything else passes through.
+- A view that shows a count renders it **beside** its text, never inside one:
+  a text carries no placeholder and no plural forms.
+- `npx viewer-i18n-check --app .` checks that every text a page asks for
+  exists. CI runs it as a blocking job, so a name that resolves to itself
+  cannot reach the deployed site unnoticed.
 - Tests: `npm run test` runs `tests/smoke.test.js`, which mounts the app
   against the real data package.
 - CI (`.github/workflows/`) is a set of thin callers of

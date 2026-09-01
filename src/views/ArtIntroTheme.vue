@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useI18n } from 'vue-i18n'
+import { useI18n } from '@metanull/viewer-core'
 import { useInventoryData } from '../composables/useInventoryData.js'
 
 const route = useRoute()
@@ -133,12 +133,12 @@ function back() {
 
 <template>
   <div v-if="!theme" class="content-box not-found">
-    <p>Theme not found.</p>
-    <router-link to="/artistic-introduction">← Return to Artistic Introduction</router-link>
+    <p>{{ $t('islamicart.notFound.theme') }}</p>
+    <router-link to="/artistic-introduction">← {{ $t('islamicart.artIntro.returnLink') }}</router-link>
   </div>
 
   <div v-else class="theme-wrap">
-    <a class="back-link" href="#" @click.prevent="back">← Back to Artistic Introduction</a>
+    <a class="back-link" href="#" @click.prevent="back">← {{ $t('islamicart.artIntro.backLink') }}</a>
 
     <div class="content-box">
       <h1 class="theme-title" v-html="mdInline(themeTitle)" />
@@ -177,7 +177,7 @@ function back() {
             <p v-if="selectedDisplay.museum" class="item-detail-meta">{{ selectedDisplay.museum }}</p>
             <p v-if="selectedDisplay.justification" class="item-detail-justification" v-html="mdInline(selectedDisplay.justification)" />
             <RouterLink :to="`/item/${encodeURIComponent(selected.item.id)}`" class="more-info-link">
-              More info →
+              {{ $t('islamicart.action.moreInfo') }} →
             </RouterLink>
           </div>
 
