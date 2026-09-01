@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useI18n } from 'vue-i18n'
+import { useI18n } from '@metanull/viewer-core'
 import { useInventoryData } from '../composables/useInventoryData.js'
 
 const route = useRoute()
@@ -20,7 +20,7 @@ const dynasty = computed(() => dynasties.value.find(d => d.id === decodeURICompo
 // Follows the global vue-i18n locale; falls back to the dataset default when
 // the site locale has no dynasty translations.
 
-const { locale } = useI18n()
+const { locale, t } = useI18n()
 const activeLang = computed(() =>
   availableLangs.value.includes(locale.value) ? locale.value : defaultLang
 )
@@ -38,7 +38,7 @@ async function loadDynastyLangTranslations(lang) {
 
 watch(activeLang, lang => loadDynastyLangTranslations(lang), { immediate: true })
 
-const t = computed(() => dynastyTranslationsCache.value[activeLang.value]?.[dynasty.value?.id] ?? {})
+const tr = computed(() => dynastyTranslationsCache.value[activeLang.value]?.[dynasty.value?.id] ?? {})
 
 // ── Glossary term hyperlinking in dynasty history ───────────────────────
 //
@@ -161,10 +161,10 @@ const relatedExhibitions = computed(() => {
 const keyFacts = computed(() => {
   if (!dynasty.value) return []
   const facts = []
-  if (t.value.also_known_as) facts.push({ label: 'Also known as', value: t.value.also_known_as })
-  if (t.value.area) facts.push({ label: 'Area', value: t.value.area })
-  if (t.value.date_description_ah) facts.push({ label: 'Dates (AH)', value: t.value.date_description_ah })
-  if (t.value.date_description_ad) facts.push({ label: 'Dates (AD)', value: t.value.date_description_ad })
+  if (tr.value.also_known_as) facts.push({ label: t('islamicart.sheet.alsoKnownAs'), value: tr.value.also_known_as })
+  if (tr.value.area) facts.push({ label: t('islamicart.sheet.area'), value: tr.value.area })
+  if (tr.value.date_description_ah) facts.push({ label: t('islamicart.dynasty.datesAh'), value: tr.value.date_description_ah })
+  if (tr.value.date_description_ad) facts.push({ label: t('islamicart.dynasty.datesAd'), value: tr.value.date_description_ad })
   return facts
 })
 
@@ -200,28 +200,28 @@ function back() {
 
 <template>
   <div v-if="!dynasty" class="content-box not-found">
-    <p>Dynasty not found.</p>
-    <router-link to="/dynasties">← Return to Islamic Dynasties</router-link>
+    <p>{{ $t('islamicart.notFound.dynasty') }}</p>
+    <router-link to="/dynasties">← {{ $t('islamicart.dynasty.returnLink') }}</router-link>
   </div>
 
   <div v-else class="detail-wrap">
-    <a class="back-link" href="#" @click.prevent="back">← Back to Islamic Dynasties</a>
+    <a class="back-link" href="#" @click.prevent="back">← {{ $t('islamicart.dynasty.backLink') }}</a>
 
     <div class="detail content-box" @click="onDetailClick">
-      <h1 class="detail-title" v-html="mdInline(t.name ?? dynasty.id)" />
+      <h1 class="detail-title" v-html="mdInline(tr.name ?? dynasty.id)" />
 
       <!-- Representative image -->
       <figure v-if="dynasty.image" class="dynasty-image">
-        <img :src="dynasty.image" :alt="t.name ?? ''" loading="lazy" />
+        <img :src="dynasty.image" :alt="tr.name ?? ''" loading="lazy" />
       </figure>
 
       <!-- View objects / monuments -->
       <div v-if="relatedItems.length || timelineLink" class="view-items-row">
         <RouterLink v-if="relatedItems.length" :to="relatedItemsLink()" class="btn">
-          View Objects &amp; Monuments ({{ relatedItems.length }}) →
+          {{ $t('islamicart.action.viewObjectsAndMonuments') }} ({{ relatedItems.length }}) →
         </RouterLink>
         <RouterLink v-if="timelineLink" :to="timelineLink" class="homepage-link">
-          View on Timeline →
+          {{ $t('islamicart.action.viewOnTimeline') }} →
         </RouterLink>
       </div>
 
@@ -232,13 +232,13 @@ function back() {
           :key="'ai-' + theme.id"
           :to="`/artistic-introduction/${encodeURIComponent(theme.id)}`"
           class="homepage-link"
-        >{{ theme.label }} (Artistic Introduction) →</RouterLink>
+        >{{ theme.label }} ({{ $t('islamicart.nav.artisticIntroduction') }}) →</RouterLink>
         <RouterLink
           v-for="exh in relatedExhibitions"
           :key="'exh-' + exh.id"
           :to="`/exhibitions/${encodeURIComponent(exh.id)}`"
           class="homepage-link"
-        >{{ exh.label }} (Exhibition) →</RouterLink>
+        >{{ exh.label }} ({{ $t('islamicart.exhibition.singular') }}) →</RouterLink>
       </div>
 
       <!-- Key facts table -->
@@ -252,14 +252,14 @@ function back() {
       </table>
 
       <!-- History -->
-      <section v-if="t.history" class="content-section">
-        <h2 class="content-section-heading">History</h2>
-        <div v-html="mdGloss(t.history)" class="prose" />
+      <section v-if="tr.history" class="content-section">
+        <h2 class="content-section-heading">{{ $t('islamicart.dynasty.history') }}</h2>
+        <div v-html="mdGloss(tr.history)" class="prose" />
       </section>
 
       <!-- Related items -->
       <div v-if="relatedItems.length" class="related">
-        <h2 class="sub-section-title">Objects &amp; Monuments from this Dynasty</h2>
+        <h2 class="sub-section-title">{{ $t('islamicart.dynasty.relatedItems') }}</h2>
         <ul class="related-list item-list">
           <li
             v-for="rel in relatedItems.slice(0, 12)"
@@ -280,7 +280,7 @@ function back() {
           </li>
         </ul>
         <RouterLink v-if="relatedItems.length > 12" :to="relatedItemsLink()" class="see-all-link">
-          See all {{ relatedItems.length }} objects &amp; monuments →
+          {{ $t('islamicart.action.seeAll') }} {{ relatedItems.length }} {{ $t('islamicart.results.objectsAndMonuments') }} →
         </RouterLink>
       </div>
     </div>
@@ -288,8 +288,8 @@ function back() {
     <!-- Glossary term modal, mirrors ItemDetail.vue's -->
     <div v-if="activeGlossaryTerm" class="gloss-modal-overlay" @click.self="closeGlossaryModal">
       <div class="gloss-modal">
-        <button class="gloss-modal-close" @click="closeGlossaryModal" aria-label="Close">✕</button>
-        <h2 class="gloss-modal-heading">Glossary &amp; Spelling</h2>
+        <button class="gloss-modal-close" @click="closeGlossaryModal" :aria-label="$t('islamicart.glossary.close')">✕</button>
+        <h2 class="gloss-modal-heading">{{ $t('islamicart.glossary.heading') }}</h2>
         <h3 class="gloss-modal-term">{{ activeGlossaryTerm.spelling }}</h3>
         <p class="gloss-modal-definition">{{ activeGlossaryTerm.definition }}</p>
       </div>

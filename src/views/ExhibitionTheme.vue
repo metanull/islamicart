@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useI18n } from 'vue-i18n'
+import { useI18n } from '@metanull/viewer-core'
 import { useInventoryData } from '../composables/useInventoryData.js'
 
 const route = useRoute()
@@ -173,13 +173,13 @@ function back() {
 
 <template>
   <div v-if="!theme" class="content-box not-found">
-    <p>Theme not found.</p>
-    <router-link v-if="exhibition" :to="`/exhibitions/${exhibition.id}`">← Return to exhibition</router-link>
-    <router-link v-else to="/exhibitions">← Return to Exhibitions</router-link>
+    <p>{{ $t('islamicart.notFound.theme') }}</p>
+    <router-link v-if="exhibition" :to="`/exhibitions/${exhibition.id}`">← {{ $t('islamicart.exhibition.returnToExhibition') }}</router-link>
+    <router-link v-else to="/exhibitions">← {{ $t('islamicart.exhibition.returnLink') }}</router-link>
   </div>
 
   <div v-else class="theme-wrap">
-    <a class="back-link" href="#" @click.prevent="back">← Back to {{ resolveTitle(exhibition.id, exhibition.internal_name) }}</a>
+    <a class="back-link" href="#" @click.prevent="back">← {{ $t('islamicart.exhibition.backTo') }} {{ resolveTitle(exhibition.id, exhibition.internal_name) }}</a>
 
     <div class="content-box">
       <h1 class="theme-title" v-html="mdInline(pageTitle)" />
@@ -188,11 +188,11 @@ function back() {
            theme's pages are paginated continuations, not fixed named tabs) -->
       <div v-if="pages.length > 1" class="page-nav-row">
         <button class="page-nav-btn" :disabled="activeTabIndex === 0" @click="goToPage(activeTabIndex - 1)">
-          ← Previous page
+          ← {{ $t('islamicart.action.previousPage') }}
         </button>
-        <span class="page-nav-count">Page {{ activeTabIndex + 1 }} of {{ pages.length }}</span>
+        <span class="page-nav-count">{{ activeTabIndex + 1 }} / {{ pages.length }}</span>
         <button class="page-nav-btn" :disabled="activeTabIndex === pages.length - 1" @click="goToPage(activeTabIndex + 1)">
-          Next page →
+          {{ $t('islamicart.action.nextPage') }} →
         </button>
       </div>
 
@@ -217,20 +217,20 @@ function back() {
               <button
                 class="variant-btn"
                 :class="{ active: selectedVariantIndex === 0 }"
-                title="Main view"
+                :title="$t('islamicart.exhibition.mainView')"
                 @click="selectVariant(0)"
               >
-                <img v-if="selected.item.images?.[0]?.url" :src="selected.item.images[0].url" alt="Main view" />
+                <img v-if="selected.item.images?.[0]?.url" :src="selected.item.images[0].url" :alt="$t('islamicart.exhibition.mainView')" />
               </button>
               <button
                 v-for="(variant, idx) in selectedVariants"
                 :key="idx"
                 class="variant-btn"
                 :class="{ active: selectedVariantIndex === idx + 1 }"
-                title="Detail view"
+                :title="$t('islamicart.exhibition.detailView')"
                 @click="selectVariant(idx + 1)"
               >
-                <img v-if="variant.image_url" :src="variant.image_url" alt="Detail view" />
+                <img v-if="variant.image_url" :src="variant.image_url" :alt="$t('islamicart.exhibition.detailView')" />
               </button>
             </div>
 
@@ -241,7 +241,7 @@ function back() {
             <p v-if="selectedDisplay.museum" class="item-detail-meta">{{ selectedDisplay.museum }}</p>
             <p v-if="selectedDisplay.justification" class="item-detail-justification" v-html="mdInline(selectedDisplay.justification)" />
             <RouterLink :to="`/item/${encodeURIComponent(selected.item.id)}`" class="more-info-link">
-              More info →
+              {{ $t('islamicart.action.moreInfo') }} →
             </RouterLink>
           </div>
 

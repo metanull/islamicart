@@ -9,4 +9,4 @@ permissions:
   packages: read
 jobs:
   audit:
-    uses: metanull/viewer-workflows/.github/workflows/audit-scheduled.yml@v1.4.0
+    uses: metanull/viewer-workflows/.github/workflows/audit-scheduled.yml@v1.5.0

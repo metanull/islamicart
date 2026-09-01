@@ -7,6 +7,6 @@ permissions:
   packages: read
 jobs:
   ci:
-    uses: metanull/viewer-workflows/.github/workflows/website-ci.yml@v1.4.0
+    uses: metanull/viewer-workflows/.github/workflows/website-ci.yml@v1.5.0
   locales:
-    uses: metanull/viewer-workflows/.github/workflows/locale-validate.yml@v1.4.0
+    uses: metanull/viewer-workflows/.github/workflows/locale-validate.yml@v1.5.0
