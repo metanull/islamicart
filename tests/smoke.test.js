@@ -26,7 +26,12 @@ describe('website smoke test', () => {
     expect(host.querySelector('.vc-home')).toBeNull()
 
     app.unmount()
-  })
+    // Longer than vitest's default 5s. This mounts the whole website against
+    // the real data package, and this one is the largest of the seven — it came
+    // in around 5s and failed roughly one run in three, on main, whatever was
+    // being changed. A blocking check that fails at random teaches people to
+    // re-run it rather than read it.
+  }, 20000)
 
   it('declares every legacy route', () => {
     const paths = config.extraViews.map((r) => r.path)
