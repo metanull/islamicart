@@ -40,14 +40,17 @@ watch(activeLang, lang => loadDynastyLangTranslations(lang), { immediate: true }
 
 const tr = computed(() => dynastyTranslationsCache.value[activeLang.value]?.[dynasty.value?.id] ?? {})
 
-// ── Glossary term hyperlinking in dynasty history ───────────────────────
+// ── Glossary term highlighting in dynasty history ───────────────────────
 //
 // Items link only the glossary terms actually used in their own text
 // (item.glossary_ids, resolved at export time via item_translation_spelling).
 // Dynasties have no such precomputed link — there's no dynasty_translation_spelling
 // table — so instead of a dynasty-specific 60-row schema/importer change,
 // scan the full (small, ~600-term) glossary set against this dynasty's own
-// history text client-side. Mirrors ItemDetail.vue's glossify/modal pattern.
+// history text client-side. Passed to md() below, which highlights via
+// viewer-core's renderBlock as a marked inline extension — a token the
+// parser produces, not HTML wrapped in beforehand (see
+// metanull/viewer-core#30 and ItemDetail.vue's matching comment).
 
 const glossaryTranslationsCache = ref({})
 
@@ -63,45 +66,20 @@ async function loadGlossaryTranslations(lang) {
 
 watch(activeLang, lang => loadGlossaryTranslations(lang), { immediate: true })
 
-// spelling (lowercased) -> { gid, spelling, definition }, longest spelling first
-// so multi-word phrases match before any single word they contain.
+// { id, spelling, definition } for every spelling of every glossary term —
+// id/spelling is exactly the shape renderBlock/renderInline's `glossary`
+// option expects.
 const glossaryEntries = computed(() => {
-  const byGid = glossaryTranslationsCache.value[activeLang.value] ?? {}
+  const byId = glossaryTranslationsCache.value[activeLang.value] ?? {}
   const entries = []
-  for (const [gid, entry] of Object.entries(byGid)) {
+  for (const [id, entry] of Object.entries(byId)) {
     if (!entry?.spellings?.length) continue
     for (const spelling of entry.spellings) {
-      entries.push({ gid, spelling, definition: entry.definition ?? '' })
+      entries.push({ id, spelling, definition: entry.definition ?? '' })
     }
   }
-  return entries.sort((a, b) => b.spelling.length - a.spelling.length)
+  return entries
 })
-
-const glossaryRegex = computed(() => {
-  const entries = glossaryEntries.value
-  if (!entries.length) return null
-  const escaped = entries.map(e => e.spelling.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
-  return new RegExp(`\\b(${escaped.join('|')})\\b`, 'gi')
-})
-
-const spellingToEntry = computed(() => {
-  const m = new Map()
-  for (const e of glossaryEntries.value) m.set(e.spelling.toLowerCase(), e)
-  return m
-})
-
-function glossify(text) {
-  if (!text || !glossaryRegex.value) return text
-  return text.replace(glossaryRegex.value, match => {
-    const entry = spellingToEntry.value.get(match.toLowerCase())
-    if (!entry) return match
-    return `<span class="gloss-term" data-gid="${entry.gid}">${match}</span>`
-  })
-}
-
-function mdGloss(text) {
-  return md(glossify(text))
-}
 
 const activeGlossaryTerm = ref(null)
 
@@ -109,7 +87,7 @@ function onDetailClick(event) {
   const el = event.target?.closest?.('.gloss-term')
   if (!el) return
   event.preventDefault()
-  const entry = glossaryEntries.value.find(e => e.gid === el.dataset.gid)
+  const entry = glossaryEntries.value.find(e => e.id === el.dataset.gid)
   activeGlossaryTerm.value = {
     spelling: el.textContent,
     definition: entry?.definition ?? '',
@@ -254,7 +232,7 @@ function back() {
       <!-- History -->
       <section v-if="tr.history" class="content-section">
         <h2 class="content-section-heading">{{ $t('islamicart.dynasty.history') }}</h2>
-        <div v-html="mdGloss(tr.history)" class="prose" />
+        <div v-html="md(tr.history, glossaryEntries)" class="prose" />
       </section>
 
       <!-- Related items -->
