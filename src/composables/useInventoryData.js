@@ -1,6 +1,6 @@
 import { ref, computed } from 'vue'
 import { marked } from 'marked'
-import { renderBlock, renderInline } from '@metanull/viewer-core'
+import { renderBlock, renderInline, useDataPackage } from '@metanull/viewer-core'
 import manifestData from '@inventory-data/manifest.json'
 import itemsData from '@inventory-data/items.json'
 import countriesData from '@inventory-data/countries.json'
@@ -36,6 +36,8 @@ function itemProjectKey(item) {
   return projectKeyById.get(item.project_id) ?? null
 }
 
+const { loadTranslations } = useDataPackage()
+
 const enItemTranslations = ref({})
 const enCountryTranslations = ref({})
 const enDynastyTranslations = ref({})
@@ -46,23 +48,29 @@ const translationsCache = ref({}) // lang -> item translations (for detail view)
 
 let enLoaded = false
 
+// Every translation file is loaded by name through useDataPackage —
+// never by a dynamic import with an interpolated specifier
+// (`import(`...${lang}...`)`), which a bundler can't resolve statically and
+// so bundles every language eagerly instead of lazily loading the one asked
+// for. That is what made this build unable to finish in CI.
 async function loadEnglishTranslations() {
   if (enLoaded) return
   enLoaded = true
-  await Promise.allSettled([
-    import('@inventory-data/translations/items.en.json')
-      .then(m => { enItemTranslations.value = m.default }),
-    import('@inventory-data/translations/countries.en.json')
-      .then(m => { enCountryTranslations.value = m.default }),
-    import('@inventory-data/translations/dynasties.en.json')
-      .then(m => { enDynastyTranslations.value = m.default }),
-    import('@inventory-data/translations/partners.en.json')
-      .then(m => { enPartnerTranslations.value = m.default }),
-    import('@inventory-data/translations/timeline_events.en.json')
-      .then(m => { enTimelineEventTranslations.value = m.default }),
-    import('@inventory-data/translations/collections.en.json')
-      .then(m => { enCollectionTranslations.value = m.default }),
-  ])
+  const [itemsT, countriesT, dynastiesT, partnersT, timelineEventsT, collectionsT] =
+    await Promise.all([
+      loadTranslations('items', 'en'),
+      loadTranslations('countries', 'en'),
+      loadTranslations('dynasties', 'en'),
+      loadTranslations('partners', 'en'),
+      loadTranslations('timeline_events', 'en'),
+      loadTranslations('collections', 'en'),
+    ])
+  enItemTranslations.value = itemsT
+  enCountryTranslations.value = countriesT
+  enDynastyTranslations.value = dynastiesT
+  enPartnerTranslations.value = partnersT
+  enTimelineEventTranslations.value = timelineEventsT
+  enCollectionTranslations.value = collectionsT
   // Seed English into the detail-view cache too
   if (!translationsCache.value['en']) {
     translationsCache.value = { ...translationsCache.value, en: enItemTranslations.value }
@@ -71,12 +79,8 @@ async function loadEnglishTranslations() {
 
 async function loadLangTranslations(lang) {
   if (translationsCache.value[lang]) return
-  try {
-    const m = await import(`@inventory-data/translations/items.${lang}.json`)
-    translationsCache.value = { ...translationsCache.value, [lang]: m.default }
-  } catch {
-    translationsCache.value = { ...translationsCache.value, [lang]: {} }
-  }
+  const data = await loadTranslations('items', lang)
+  translationsCache.value = { ...translationsCache.value, [lang]: data }
 }
 
 // Call immediately so lists are populated as soon as the app boots
