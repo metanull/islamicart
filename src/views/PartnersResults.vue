@@ -5,7 +5,11 @@ import { useI18n } from '@metanull/viewer-core'
 import { useInventoryData } from '../composables/useInventoryData.js'
 
 const route = useRoute()
-const { partners, countryLabel, partnerLabel } = useInventoryData()
+const {
+  countryLabel,
+  partnerLabel,
+  partners,
+} = useInventoryData()
 const { t } = useI18n()
 
 const filterType = computed(() => (route.query.type === 'institution' ? 'institution' : 'museum'))
@@ -160,7 +164,7 @@ function partnerLink(partner) {
 }
 .country-head h3::before {
   content: '▸ ';
-  color: var(--gold-dark);
+  color: var(--accent-dark);
 }
 details[open] > .country-head h3::before { content: '▾ '; }
 

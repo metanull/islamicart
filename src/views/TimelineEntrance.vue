@@ -6,7 +6,11 @@ import { useInventoryData } from '../composables/useInventoryData.js'
 
 const router = useRouter()
 const { t } = useI18n()
-const { timelines, timelineEvents, countryLabel } = useInventoryData()
+const {
+  countryLabel,
+  timelineEvents,
+  timelines,
+} = useInventoryData()
 
 // Countries available in the timeline data (one Timeline per ISL country)
 const availableCountries = computed(() =>

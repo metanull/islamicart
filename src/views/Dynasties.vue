@@ -4,7 +4,13 @@ import { useRouter } from 'vue-router'
 import { useInventoryData } from '../composables/useInventoryData.js'
 
 const router = useRouter()
-const { dynasties, items, dynastyLabel, enDynastyTranslations, md } = useInventoryData()
+const {
+  dynasties,
+  dynastyLabel,
+  items,
+  md,
+  tr,
+} = useInventoryData()
 
 // Legacy intro copy from https://islamicart.museumwnf.org/dynasties/ — not
 // backed by any database table (confirmed: dynasty-importer.ts only imports
@@ -38,9 +44,9 @@ const dynastyList = computed(() => {
     .map(d => ({
       ...d,
       name: dynastyLabel(d.id),
-      also_known_as: enDynastyTranslations.value[d.id]?.also_known_as ?? '',
-      area: enDynastyTranslations.value[d.id]?.area ?? '',
-      date_description_ad: enDynastyTranslations.value[d.id]?.date_description_ad ?? '',
+      also_known_as: tr('dynasties', d.id)?.also_known_as ?? '',
+      area: tr('dynasties', d.id)?.area ?? '',
+      date_description_ad: tr('dynasties', d.id)?.date_description_ad ?? '',
       itemCount: items.value.filter(i => i.dynasty_ids.includes(d.id)).length,
     }))
     .sort((a, b) => (a.from_ad ?? 9999) - (b.from_ad ?? 9999))

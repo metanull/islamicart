@@ -6,8 +6,13 @@ import { useInventoryData } from '../composables/useInventoryData.js'
 
 const router = useRouter()
 const {
-  items, countries, partners, dynasties,
-  countryLabel, dynastyLabel, partnerLabel,
+  countries,
+  countryLabel,
+  dynasties,
+  dynastyLabel,
+  items,
+  partnerLabel,
+  partners,
 } = useInventoryData()
 
 const filterType = ref('country') // country | dynasty | partner | begin | end

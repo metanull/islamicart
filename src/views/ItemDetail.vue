@@ -1,49 +1,51 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useI18n } from '@metanull/viewer-core'
+import { languageLabels, useI18n, useRecordLanguage } from '@metanull/viewer-core'
 import { useInventoryData } from '../composables/useInventoryData.js'
 
 const route  = useRoute()
 const router = useRouter()
 
 const {
-  items, dynasties,
-  availableLangs, defaultLang,
-  translationsCache,
-  loadLangTranslations,
+  artIntroLinksForItem,
+  dynasties,
+  exhibitionLinksForItem,
   itemById,
   itemLabel,
-  artIntroLinksForItem, exhibitionLinksForItem,
-  md, mdInline,
+  items,
+  loadTranslations,
+  md,
+  mdInline,
+  tr,
 } = useInventoryData()
 
-const { locale, t } = useI18n()
+const { t } = useI18n()
 
 // ── Active item & language ────────────────────────────────────────────
 
-const item = computed(() => itemById.value[decodeURIComponent(route.params.id)] ?? null)
+const item = computed(() => itemById.value.get(decodeURIComponent(route.params.id)) ?? null)
 
-// Only languages this specific item actually has a translation for — not every
-// site language (most items are translated into a handful of languages, not all).
-const itemLangs = computed(() => {
-  const langs = item.value?.languages
-  return langs?.length ? langs : availableLangs.value
-})
-
-// Content language follows the global site language when this item has a
-// translation for it; otherwise fall back to the default pick (defaultLang if
-// available, else the item's first language). Recomputes on navigation, so no
-// per-item reset watcher is needed.
-const activeLang = computed(() =>
-  itemLangs.value.includes(locale.value)
-    ? locale.value
-    : (itemLangs.value.includes(defaultLang) ? defaultLang : (itemLangs.value[0] ?? defaultLang))
-)
+// The record's language, not the site's. It follows the site language where
+// this item carries it, English where it does not, and the item's first
+// language where it has neither — and the visitor may toggle it here, a
+// choice that stays on this sheet and never touches the site language or the
+// URL. Only the languages this item actually has a translation for are
+// offered: most items are translated into a handful, not all.
+const {
+  language: activeLang,
+  languages: itemLangs,
+  dir: contentDir,
+  select: selectLanguage,
+} = useRecordLanguage(item, { entity: 'items' })
 
 watch(activeLang, lang => {
-  loadLangTranslations(lang)
+  loadTranslations('items', lang)
 }, { immediate: true })
+
+// The switcher's labels: the language's own name where the package declares
+// one, its code in capitals where it does not.
+const recordLanguages = computed(() => languageLabels(itemLangs.value))
 
 // ── Translation helpers ───────────────────────────────────────────────
 
@@ -53,7 +55,7 @@ watch(activeLang, lang => {
 // something other than a written-out name.
 function itemText(it) {
   if (!it) return {}
-  return translationsCache.value[activeLang.value]?.[it.id] ?? {}
+  return tr('items', it.id, activeLang.value) ?? {}
 }
 
 function labelText(it) {
@@ -66,26 +68,13 @@ function labelHtml(it) {
   return mdInline(itemText(it).name ?? it.internal_name ?? it.id, glossaryEntries.value)
 }
 
-// Item content (not the app's own English interface) follows the active
-// language's natural direction — Arabic reads right-to-left.
-const contentDir = computed(() => (activeLang.value === 'ar' ? 'rtl' : 'ltr'))
-
 // ── Dynasties for this item ───────────────────────────────────────────
+//
+// Resolved by name through viewer-core, which caches them: most languages
+// have no dynasties translation file at all, and a miss reads as `{}`, so the
+// dynasty cards fall back to their English labels.
 
-const dynastyTranslationsCache = ref({})
-
-async function loadDynastyTranslations(lang) {
-  if (dynastyTranslationsCache.value[lang]) return
-  try {
-    const m = await import(`@inventory-data/translations/dynasties.${lang}.json`)
-    dynastyTranslationsCache.value = { ...dynastyTranslationsCache.value, [lang]: m.default }
-  } catch {
-    // Most languages have no dynasties translation file; the dynasty cards
-    // then fall back to their English labels.
-  }
-}
-
-watch(activeLang, lang => loadDynastyTranslations(lang), { immediate: true })
+watch(activeLang, lang => loadTranslations('dynasties', lang), { immediate: true })
 
 // ── Glossary term highlighting ────────────────────────────────────────
 //
@@ -100,19 +89,7 @@ watch(activeLang, lang => loadDynastyTranslations(lang), { immediate: true })
 // the resulting spans are handled via event delegation (v-html content isn't
 // part of Vue's own template, so it can't bind @click directly).
 
-const glossaryTranslationsCache = ref({})
-
-async function loadGlossaryTranslations(lang) {
-  if (glossaryTranslationsCache.value[lang]) return
-  try {
-    const m = await import(`@inventory-data/translations/glossary.${lang}.json`)
-    glossaryTranslationsCache.value = { ...glossaryTranslationsCache.value, [lang]: m.default }
-  } catch {
-    glossaryTranslationsCache.value = { ...glossaryTranslationsCache.value, [lang]: {} }
-  }
-}
-
-watch(activeLang, lang => loadGlossaryTranslations(lang), { immediate: true })
+watch(activeLang, lang => loadTranslations('glossary', lang), { immediate: true })
 
 // { id, spelling, definition } for every spelling of this item's glossary
 // terms in the active language — id/spelling is exactly the shape
@@ -120,10 +97,9 @@ watch(activeLang, lang => loadGlossaryTranslations(lang), { immediate: true })
 const glossaryEntries = computed(() => {
   const ids = item.value?.glossary_ids ?? []
   if (!ids.length) return []
-  const byLang = glossaryTranslationsCache.value[activeLang.value] ?? {}
   const entries = []
   for (const id of ids) {
-    const entry = byLang[id]
+    const entry = tr('glossary', id, activeLang.value)
     if (!entry?.spellings?.length) continue
     for (const spelling of entry.spellings) {
       entries.push({ id, spelling, definition: entry.definition ?? '' })
@@ -151,12 +127,12 @@ function closeGlossaryModal() {
 
 const dynastyById = computed(() => {
   const m = {}
-  for (const d of dynasties.value) m[d.id] = d
+  for (const d of dynasties.value ?? []) m[d.id] = d
   return m
 })
 
 function tDynasty(dynastyId) {
-  return dynastyTranslationsCache.value[activeLang.value]?.[dynastyId] ?? {}
+  return tr('dynasties', dynastyId, activeLang.value)
 }
 
 const selectedDynasties = computed(() => {
@@ -179,7 +155,7 @@ const relatedItems = computed(() => {
   const seen = new Set()
   return links
     .map(link => {
-      const it = itemById.value[link.id]
+      const it = itemById.value.get(link.id)
       if (!it || seen.has(it.id)) return null
       seen.add(it.id)
       return { item: it, justifications: link.justifications ?? {} }
@@ -389,6 +365,22 @@ function back() {
       <!-- Type badge -->
       <div class="detail-type-badge">{{ item.type }}</div>
 
+      <!-- The languages this record carries. Picking one changes what this
+           sheet is read in and nothing else: the site language, the URL and
+           every other page are untouched. -->
+      <div class="record-languages" v-if="recordLanguages.length > 1">
+        <button
+          v-for="entry in recordLanguages"
+          :key="entry.code"
+          type="button"
+          class="record-language"
+          :class="{ 'record-language--active': entry.code === activeLang }"
+          :aria-pressed="entry.code === activeLang ? 'true' : 'false'"
+          :lang="entry.code"
+          @click="selectLanguage(entry.code)"
+        >{{ entry.label }}</button>
+      </div>
+
       <!-- Title -->
       <h1 class="detail-title" :dir="contentDir" v-html="labelHtml(item)" />
 
@@ -586,10 +578,32 @@ function back() {
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: var(--heading);
-  border: 1px solid var(--gold-dark);
+  border: 1px solid var(--accent-dark);
   padding: 2px 8px;
   margin-bottom: 10px;
   font-family: 'Roboto', sans-serif;
+}
+
+.record-languages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+.record-language {
+  font: inherit;
+  font-size: 12px;
+  padding: 2px 8px;
+  cursor: pointer;
+  color: var(--text);
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+}
+.record-language--active {
+  color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
 }
 
 .detail-title {
@@ -640,7 +654,7 @@ function back() {
   text-align: left;
 }
 .key-facts th {
-  background: var(--gold-pale);
+  background: var(--accent-pale);
   width: 36%;
   font-weight: 500;
   color: var(--heading);
@@ -755,7 +769,7 @@ function back() {
 .dynasties { margin-top: 20px; border-top: 1px solid var(--border); padding-top: 16px; }
 .dynasty-card {
   background: var(--section-bg);
-  border-left: 3px solid var(--gold-dark);
+  border-left: 3px solid var(--accent-dark);
   padding: 10px 14px;
   margin-bottom: 8px;
 }
@@ -802,12 +816,12 @@ function back() {
 .detail :deep(.gloss-term) {
   color: var(--heading);
   text-decoration: underline dotted;
-  text-decoration-color: var(--gold-dark);
+  text-decoration-color: var(--accent-dark);
   text-underline-offset: 2px;
   cursor: pointer;
 }
 .detail :deep(.gloss-term:hover) {
-  color: var(--gold-dark);
+  color: var(--accent-dark);
   text-decoration-style: solid;
 }
 
@@ -825,7 +839,7 @@ function back() {
 .gloss-modal {
   position: relative;
   background: var(--section-bg, #fff);
-  border-top: 4px solid var(--gold-dark);
+  border-top: 4px solid var(--accent-dark);
   max-width: 480px;
   width: 100%;
   padding: 28px 24px;

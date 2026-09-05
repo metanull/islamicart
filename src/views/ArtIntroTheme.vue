@@ -8,13 +8,16 @@ const route = useRoute()
 const router = useRouter()
 const { locale } = useI18n()
 const {
-  itemById,
-  availableLangs, defaultLang,
-  translationsCache, loadLangTranslations,
-  dynastyLabel, partnerLabel,
   artIntroThemeById,
-  enCollectionTranslations,
-  md, mdInline,
+  availableLanguages,
+  defaultLang,
+  dynastyLabel,
+  itemById,
+  loadTranslations,
+  md,
+  mdInline,
+  partnerLabel,
+  tr,
 } = useInventoryData()
 
 const theme = computed(() => artIntroThemeById(decodeURIComponent(route.params.themeId)) ?? null)
@@ -42,27 +45,15 @@ const activePage = computed(() => pages.value[activeTabIndex.value] ?? null)
 // the selected locale has no content.
 
 const activeLang = computed(() =>
-  availableLangs.value.includes(locale.value) ? locale.value : defaultLang
+  availableLanguages('items').includes(locale.value) ? locale.value : defaultLang
 )
-const collectionLangCache = ref({})
-
-async function loadCollectionLangTranslations(lang) {
-  if (collectionLangCache.value[lang]) return
-  try {
-    const m = await import(`@inventory-data/translations/collections.${lang}.json`)
-    collectionLangCache.value = { ...collectionLangCache.value, [lang]: m.default }
-  } catch {
-    collectionLangCache.value = { ...collectionLangCache.value, [lang]: {} }
-  }
-}
-
 watch(activeLang, lang => {
-  loadCollectionLangTranslations(lang)
-  loadLangTranslations(lang)
+  loadTranslations('collections', lang)
+  loadTranslations('items', lang)
 }, { immediate: true })
 
 function collectionText(collectionId) {
-  return collectionLangCache.value[activeLang.value]?.[collectionId] ?? {}
+  return tr('collections', collectionId, activeLang.value)
 }
 
 // The importer synthesizes a placeholder title ("Theme 5", "Artintro Page 17")
@@ -74,7 +65,7 @@ const PLACEHOLDER_TITLE = /^(Artintro )?(Theme|Page) \d+$/
 function resolveTitle(collectionId, fallbackName) {
   const local = collectionText(collectionId).title
   if (local && !PLACEHOLDER_TITLE.test(local)) return local
-  const en = enCollectionTranslations.value[collectionId]?.title
+  const en = tr('collections', collectionId)?.title
   if (en && !PLACEHOLDER_TITLE.test(en)) return en
   return fallbackName
 }
@@ -93,7 +84,7 @@ const gridItems = computed(() => {
   const page = activePage.value
   if (!page) return []
   return page.items
-    .map(entry => ({ entry, item: itemById.value[entry.id] }))
+    .map(entry => ({ entry, item: itemById.value.get(entry.id) }))
     .filter(({ item }) => item)
 })
 
@@ -110,7 +101,7 @@ const selectedDisplay = computed(() => {
   const sel = selected.value
   if (!sel) return null
   const caption = sel.entry.caption?.[activeLang.value] ?? {}
-  const t = translationsCache.value[activeLang.value]?.[sel.item.id] ?? {}
+  const t = tr('items', sel.item.id, activeLang.value) ?? {}
   return {
     name: caption.name ?? t.name ?? sel.item.internal_name ?? sel.item.id,
     date: caption.date ?? t.dates ?? '',
@@ -234,7 +225,7 @@ function back() {
 .tab-btn:hover { color: var(--heading); }
 .tab-btn.active {
   color: var(--heading);
-  border-bottom-color: var(--gold-dark);
+  border-bottom-color: var(--accent-dark);
 }
 
 /* Two-column layout */
@@ -322,8 +313,8 @@ function back() {
   cursor: pointer;
   background: #f0ebdc;
 }
-.thumb-cell.active { border-color: var(--gold-dark); }
-.thumb-cell:hover { border-color: var(--gold-amber); }
+.thumb-cell.active { border-color: var(--accent-dark); }
+.thumb-cell:hover { border-color: var(--accent-soft); }
 .thumb-cell img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .thumb-placeholder { width: 100%; height: 100%; }
 </style>
