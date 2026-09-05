@@ -30,7 +30,7 @@ export default defineConfig({
     // what the app source happens to import; without it a late discovery
     // pre-bundles a second copy of Vue next to the raw one already loaded
     // and the dev server crashes on boot (seen on baroqueart).
-    include: ['vue', 'vue-router', 'marked'],
+    include: ['vue', 'vue-router'],
   },
   test: {
     environment: 'jsdom',

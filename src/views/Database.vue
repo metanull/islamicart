@@ -5,8 +5,14 @@ import { I18nText, useI18n } from '@metanull/viewer-core'
 import { useInventoryData } from '../composables/useInventoryData.js'
 
 const router = useRouter()
-const { availableLangs } = useInventoryData()
+const {
+  availableLanguages,
+} = useInventoryData()
 const { t } = useI18n()
+
+// The languages the item translations actually carry, for the search form's
+// "language" filter — a record-level filter, not the site language.
+const searchLanguages = computed(() => availableLanguages('items').slice().sort())
 
 // Matches legacy database.php's 9 field options exactly, in order. `value` is
 // the query parameter and never a text; only `label` is one, which is why each
@@ -154,7 +160,7 @@ function showAll() {
             <td>
               <select v-model="searchLanguage" style="width:120px">
                 <option value="">{{ $t('islamicart.search.anyLanguage') }}</option>
-                <option v-for="lang in availableLangs" :key="lang" :value="lang">{{ lang.toUpperCase() }}</option>
+                <option v-for="lang in searchLanguages" :key="lang" :value="lang">{{ lang.toUpperCase() }}</option>
               </select>
             </td>
           </tr>

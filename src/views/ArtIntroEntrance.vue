@@ -2,18 +2,24 @@
 import { computed } from 'vue'
 import { useInventoryData } from '../composables/useInventoryData.js'
 
-const { artIntroRoot, artIntroThemes, enCollectionTranslations, md, mdInline } = useInventoryData()
+const {
+  artIntroRoot,
+  artIntroThemes,
+  md,
+  mdInline,
+  tr,
+} = useInventoryData()
 
 const rootText = computed(() => {
   const root = artIntroRoot.value
   if (!root) return {}
-  return enCollectionTranslations.value[root.id] ?? {}
+  return tr('collections', root.id) ?? {}
 })
 
 const themeList = computed(() =>
   artIntroThemes.value.map(theme => ({
     ...theme,
-    title: enCollectionTranslations.value[theme.id]?.title ?? theme.internal_name,
+    title: tr('collections', theme.id)?.title ?? theme.internal_name,
   }))
 )
 </script>
@@ -52,7 +58,7 @@ const themeList = computed(() =>
 <style scoped>
 .not-found { color: var(--muted); font-family: 'Roboto', sans-serif; font-size: 13px; }
 
-.intro-box { border-top: 3px solid var(--gold-dark); }
+.intro-box { border-top: 3px solid var(--accent-dark); }
 .intro-subtitle {
   font-size: 16px;
   font-weight: 400;

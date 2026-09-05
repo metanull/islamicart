@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from '@metanull/viewer-core'
 import { useInventoryData } from '../composables/useInventoryData.js'
@@ -7,11 +7,16 @@ import { useInventoryData } from '../composables/useInventoryData.js'
 const route = useRoute()
 const router = useRouter()
 const {
-  itemById, dynastyLabel, partnerLabel,
-  availableLangs, defaultLang,
-  translationsCache, loadLangTranslations,
+  availableLanguages,
+  defaultLang,
+  dynastyLabel,
   exhibitionById,
-  md, mdInline,
+  itemById,
+  loadTranslations,
+  md,
+  mdInline,
+  partnerLabel,
+  tr,
 } = useInventoryData()
 
 const exhibition = computed(() => exhibitionById(decodeURIComponent(route.params.exhibitionId)) ?? null)
@@ -19,28 +24,16 @@ const exhibition = computed(() => exhibitionById(decodeURIComponent(route.params
 // ── Language (global locale; exhibition text + item captions loaded on demand) ──
 
 const { locale } = useI18n()
-const activeLang = computed(() => availableLangs.value.includes(locale.value) ? locale.value : defaultLang)
-const collectionLangCache = ref({})
-
-async function loadCollectionLangTranslations(lang) {
-  if (collectionLangCache.value[lang]) return
-  try {
-    const m = await import(`@inventory-data/translations/collections.${lang}.json`)
-    collectionLangCache.value = { ...collectionLangCache.value, [lang]: m.default }
-  } catch {
-    collectionLangCache.value = { ...collectionLangCache.value, [lang]: {} }
-  }
-}
-
+const activeLang = computed(() => availableLanguages('items').includes(locale.value) ? locale.value : defaultLang)
 watch(activeLang, lang => {
-  loadCollectionLangTranslations(lang)
-  loadLangTranslations(lang)
+  loadTranslations('collections', lang)
+  loadTranslations('items', lang)
 }, { immediate: true })
 
 const text = computed(() => {
   const e = exhibition.value
   if (!e) return {}
-  return collectionLangCache.value[activeLang.value]?.[e.id] ?? {}
+  return tr('collections', e.id, activeLang.value)
 })
 
 // ── Introduction items: attached directly to the exhibition collection ────
@@ -54,7 +47,7 @@ const introItems = computed(() => {
     .sort((a, b) => (a.entry.display_order ?? 9999) - (b.entry.display_order ?? 9999))
     .map(({ entry, item }) => {
       const caption = entry.caption?.[activeLang.value] ?? {}
-      const t = translationsCache.value[activeLang.value]?.[item.id] ?? {}
+      const t = tr('items', item.id, activeLang.value) ?? {}
       return {
         item,
         image: item.images?.[0]?.url ?? null,

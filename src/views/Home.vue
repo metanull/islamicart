@@ -5,7 +5,12 @@ import { I18nText } from '@metanull/viewer-core'
 import { useInventoryData } from '../composables/useInventoryData.js'
 
 const router = useRouter()
-const { items, itemLabel, enItemTranslations, mdInline } = useInventoryData()
+const {
+  itemLabel,
+  items,
+  mdInline,
+  tr,
+} = useInventoryData()
 
 // Pick a random item that has an image, as the featured spotlight
 const featured = computed(() => {
@@ -87,12 +92,12 @@ function goToItem(item) {
         </div>
         <div class="featured-info">
           <p class="featured-type">{{ featured.type }}</p>
-          <h3 class="featured-name" v-html="mdInline(enItemTranslations[featured.id]?.name ?? featured.internal_name ?? featured.id)" />
-          <p v-if="enItemTranslations[featured.id]?.location" class="featured-meta">
-            {{ enItemTranslations[featured.id].location }}
+          <h3 class="featured-name" v-html="mdInline(tr('items', featured.id)?.name ?? featured.internal_name ?? featured.id)" />
+          <p v-if="tr('items', featured.id)?.location" class="featured-meta">
+            {{ tr('items', featured.id).location }}
           </p>
-          <p v-if="enItemTranslations[featured.id]?.dates" class="featured-meta">
-            {{ enItemTranslations[featured.id].dates }}
+          <p v-if="tr('items', featured.id)?.dates" class="featured-meta">
+            {{ tr('items', featured.id).dates }}
           </p>
           <span class="featured-link">{{ $t('islamicart.action.viewDetails') }} →</span>
         </div>
@@ -104,7 +109,7 @@ function goToItem(item) {
 <style scoped>
 .home { display: flex; flex-direction: column; gap: 16px; }
 
-.home-banner { border-top: 3px solid var(--gold-dark); }
+.home-banner { border-top: 3px solid var(--accent-dark); }
 .home-title {
   font-size: 20px;
   font-weight: 400;
@@ -127,7 +132,7 @@ function goToItem(item) {
 
 .home-card {
   cursor: pointer;
-  border-top: 3px solid var(--gold-dark);
+  border-top: 3px solid var(--accent-dark);
   transition: box-shadow 0.15s;
 }
 .home-card:hover { box-shadow: 0 2px 10px rgba(0,0,0,0.12); }
@@ -147,7 +152,7 @@ function goToItem(item) {
 }
 
 /* Featured */
-.home-featured { border-top: 3px solid var(--gold-dark); }
+.home-featured { border-top: 3px solid var(--accent-dark); }
 .featured-inner {
   display: flex;
   gap: 20px;

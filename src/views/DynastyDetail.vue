@@ -7,11 +7,18 @@ import { useInventoryData } from '../composables/useInventoryData.js'
 const route = useRoute()
 const router = useRouter()
 const {
-  dynasties, items,
-  availableLangs, defaultLang,
-  md, mdInline,
-  enCollectionTranslations,
-  artIntroThemes, exhibitions, exhibitionThemes,
+  artIntroThemes,
+  availableLanguages,
+  defaultLang,
+  dynasties,
+  exhibitions,
+  exhibitionThemes,
+  items,
+  loadTranslations,
+  md,
+  mdInline,
+  tr,
+  translations,
 } = useInventoryData()
 
 const dynasty = computed(() => dynasties.value.find(d => d.id === decodeURIComponent(route.params.id)) ?? null)
@@ -22,23 +29,11 @@ const dynasty = computed(() => dynasties.value.find(d => d.id === decodeURICompo
 
 const { locale, t } = useI18n()
 const activeLang = computed(() =>
-  availableLangs.value.includes(locale.value) ? locale.value : defaultLang
+  availableLanguages('items').includes(locale.value) ? locale.value : defaultLang
 )
-const dynastyTranslationsCache = ref({})
+watch(activeLang, lang => loadTranslations('dynasties', lang), { immediate: true })
 
-async function loadDynastyLangTranslations(lang) {
-  if (dynastyTranslationsCache.value[lang]) return
-  try {
-    const m = await import(`@inventory-data/translations/dynasties.${lang}.json`)
-    dynastyTranslationsCache.value = { ...dynastyTranslationsCache.value, [lang]: m.default }
-  } catch {
-    dynastyTranslationsCache.value = { ...dynastyTranslationsCache.value, [lang]: {} }
-  }
-}
-
-watch(activeLang, lang => loadDynastyLangTranslations(lang), { immediate: true })
-
-const tr = computed(() => dynastyTranslationsCache.value[activeLang.value]?.[dynasty.value?.id] ?? {})
+const text = computed(() => tr('dynasties', dynasty.value?.id, activeLang.value))
 
 // ── Glossary term highlighting in dynasty history ───────────────────────
 //
@@ -52,25 +47,13 @@ const tr = computed(() => dynastyTranslationsCache.value[activeLang.value]?.[dyn
 // parser produces, not HTML wrapped in beforehand (see
 // metanull/viewer-core#30 and ItemDetail.vue's matching comment).
 
-const glossaryTranslationsCache = ref({})
-
-async function loadGlossaryTranslations(lang) {
-  if (glossaryTranslationsCache.value[lang]) return
-  try {
-    const m = await import(`@inventory-data/translations/glossary.${lang}.json`)
-    glossaryTranslationsCache.value = { ...glossaryTranslationsCache.value, [lang]: m.default }
-  } catch {
-    glossaryTranslationsCache.value = { ...glossaryTranslationsCache.value, [lang]: {} }
-  }
-}
-
-watch(activeLang, lang => loadGlossaryTranslations(lang), { immediate: true })
+watch(activeLang, lang => loadTranslations('glossary', lang), { immediate: true })
 
 // { id, spelling, definition } for every spelling of every glossary term —
 // id/spelling is exactly the shape renderBlock/renderInline's `glossary`
 // option expects.
 const glossaryEntries = computed(() => {
-  const byId = glossaryTranslationsCache.value[activeLang.value] ?? {}
+  const byId = translations('glossary', activeLang.value)
   const entries = []
   for (const [id, entry] of Object.entries(byId)) {
     if (!entry?.spellings?.length) continue
@@ -110,7 +93,7 @@ function collectionHasAnyItem(collection, idSet) {
 }
 
 function collectionLabel(collection) {
-  return enCollectionTranslations.value[collection.id]?.title ?? collection.internal_name ?? collection.id
+  return tr('collections', collection.id)?.title ?? collection.internal_name ?? collection.id
 }
 
 const relatedItemIds = computed(() => new Set(relatedItems.value.map(i => i.id)))
@@ -139,10 +122,10 @@ const relatedExhibitions = computed(() => {
 const keyFacts = computed(() => {
   if (!dynasty.value) return []
   const facts = []
-  if (tr.value.also_known_as) facts.push({ label: t('islamicart.sheet.alsoKnownAs'), value: tr.value.also_known_as })
-  if (tr.value.area) facts.push({ label: t('islamicart.sheet.area'), value: tr.value.area })
-  if (tr.value.date_description_ah) facts.push({ label: t('islamicart.dynasty.datesAh'), value: tr.value.date_description_ah })
-  if (tr.value.date_description_ad) facts.push({ label: t('islamicart.dynasty.datesAd'), value: tr.value.date_description_ad })
+  if (text.value.also_known_as) facts.push({ label: t('islamicart.sheet.alsoKnownAs'), value: text.value.also_known_as })
+  if (text.value.area) facts.push({ label: t('islamicart.sheet.area'), value: text.value.area })
+  if (text.value.date_description_ah) facts.push({ label: t('islamicart.dynasty.datesAh'), value: text.value.date_description_ah })
+  if (text.value.date_description_ad) facts.push({ label: t('islamicart.dynasty.datesAd'), value: text.value.date_description_ad })
   return facts
 })
 
@@ -186,11 +169,11 @@ function back() {
     <a class="back-link" href="#" @click.prevent="back">← {{ $t('islamicart.dynasty.backLink') }}</a>
 
     <div class="detail content-box" @click="onDetailClick">
-      <h1 class="detail-title" v-html="mdInline(tr.name ?? dynasty.id)" />
+      <h1 class="detail-title" v-html="mdInline(text.name ?? dynasty.id)" />
 
       <!-- Representative image -->
       <figure v-if="dynasty.image" class="dynasty-image">
-        <img :src="dynasty.image" :alt="tr.name ?? ''" loading="lazy" />
+        <img :src="dynasty.image" :alt="text.name ?? ''" loading="lazy" />
       </figure>
 
       <!-- View objects / monuments -->
@@ -230,9 +213,9 @@ function back() {
       </table>
 
       <!-- History -->
-      <section v-if="tr.history" class="content-section">
+      <section v-if="text.history" class="content-section">
         <h2 class="content-section-heading">{{ $t('islamicart.dynasty.history') }}</h2>
-        <div v-html="md(tr.history, glossaryEntries)" class="prose" />
+        <div v-html="md(text.history, glossaryEntries)" class="prose" />
       </section>
 
       <!-- Related items -->
@@ -322,12 +305,12 @@ function back() {
 .detail :deep(.gloss-term) {
   color: var(--heading);
   text-decoration: underline dotted;
-  text-decoration-color: var(--gold-dark);
+  text-decoration-color: var(--accent-dark);
   text-underline-offset: 2px;
   cursor: pointer;
 }
 .detail :deep(.gloss-term:hover) {
-  color: var(--gold-dark);
+  color: var(--accent-dark);
   text-decoration-style: solid;
 }
 
@@ -345,7 +328,7 @@ function back() {
 .gloss-modal {
   position: relative;
   background: var(--section-bg, #fff);
-  border-top: 4px solid var(--gold-dark);
+  border-top: 4px solid var(--accent-dark);
   max-width: 480px;
   width: 100%;
   padding: 28px 24px;
@@ -398,7 +381,7 @@ function back() {
   text-align: left;
 }
 .key-facts th {
-  background: var(--gold-pale);
+  background: var(--accent-pale);
   width: 36%;
   font-weight: 500;
   color: var(--heading);

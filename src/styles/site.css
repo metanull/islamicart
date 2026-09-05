@@ -19,12 +19,12 @@
   --link: #222222;
   --link-hover: #990000;
 
-  /* Gold accent palette */
-  --gold: #ffd600;
-  --gold-amber: #eec201;
-  --gold-dark: #e0b700;
-  --gold-light: #f5da66;
-  --gold-pale: #fdfbed;
+  /* Accent ramp — this website's own gold */
+  --accent: #ffd600;
+  --accent-soft: #eec201;
+  --accent-dark: #e0b700;
+  --accent-light: #f5da66;
+  --accent-pale: #fdfbed;
 
   /* Surfaces */
   --page-bg: #ffffff;
@@ -62,7 +62,7 @@ a:hover {
   font-size: 18px;
   font-weight: 400;
   color: var(--heading);
-  border-bottom: 2px solid var(--gold-dark);
+  border-bottom: 2px solid var(--accent-dark);
   padding-bottom: 4px;
   margin-bottom: 14px;
 }
@@ -149,12 +149,12 @@ a:hover {
   font-family: inherit;
 }
 .page-btn:hover {
-  background: var(--gold-pale);
+  background: var(--accent-pale);
 }
 .page-btn.active {
-  background: var(--gold);
+  background: var(--accent);
   color: var(--nav-fg);
-  border-color: var(--gold-dark);
+  border-color: var(--accent-dark);
   font-weight: 700;
 }
 .page-btn:disabled,
@@ -189,20 +189,20 @@ input[type='number'] {
   font-size: 13px;
   padding: 4px 8px;
   border: 1px solid var(--border);
-  background: var(--gold-pale);
+  background: var(--accent-pale);
   color: var(--text);
   border-radius: 0;
   width: auto;
 }
 select:focus,
 input:focus {
-  outline: 1px solid var(--gold-dark);
+  outline: 1px solid var(--accent-dark);
 }
 
 .btn {
   display: inline-block;
   padding: 6px 18px;
-  background: var(--gold);
+  background: var(--accent);
   color: var(--nav-fg);
   font-family: inherit;
   font-size: 13px;
@@ -212,7 +212,7 @@ input:focus {
   letter-spacing: 0.03em;
 }
 .btn:hover {
-  background: var(--gold-dark);
+  background: var(--accent-dark);
 }
 .btn-secondary {
   background: var(--border);

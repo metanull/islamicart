@@ -62,7 +62,7 @@ const navLinks = computed(() => [
   font-weight: 400;
   letter-spacing: 0.02em;
   text-transform: uppercase;
-  text-shadow: 2px 2px 4px var(--gold-light);
+  text-shadow: 2px 2px 4px var(--accent-light);
 }
 .site-logo:hover {
   color: var(--header-fg);
