@@ -84,7 +84,7 @@ const gridItems = computed(() => {
   const page = activePage.value
   if (!page) return []
   return page.items
-    .map(entry => ({ entry, item: itemById.value[entry.id] }))
+    .map(entry => ({ entry, item: itemById.value.get(entry.id) }))
     .filter(({ item }) => item)
 })
 

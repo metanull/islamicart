@@ -42,7 +42,7 @@ const introItems = computed(() => {
   const e = exhibition.value
   if (!e) return []
   return (e.items ?? [])
-    .map(entry => ({ entry, item: itemById.value[entry.id] }))
+    .map(entry => ({ entry, item: itemById.value.get(entry.id) }))
     .filter(({ item }) => item)
     .sort((a, b) => (a.entry.display_order ?? 9999) - (b.entry.display_order ?? 9999))
     .map(({ entry, item }) => {

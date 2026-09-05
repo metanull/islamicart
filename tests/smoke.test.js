@@ -4,6 +4,7 @@ import { checkOfferedLanguages } from '@metanull/viewer-core/testing'
 import { catalogues as sharedTexts } from '@metanull/viewer-i18n/standalone'
 import ownTexts from '../locales/en.json'
 import config from '../src/dataset.config.js'
+import { useInventoryData } from '../src/composables/useInventoryData.js'
 
 // The same two layers main.js assembles, in the same order: the shared bundle
 // first, this website's own file last. Mounting without them would prove
@@ -63,6 +64,17 @@ describe('website smoke test', () => {
     }
     expect(config.extraViews.find((r) => r.name === 'item').meta.entities).toContain('items')
   })
+
+  // The record lookups are viewer-core's shared indexes now, and a Map is not
+  // an object: `byId(...)[id]` reads as undefined rather than failing, so a
+  // page would simply render nothing. This is where that shows.
+  it('resolves a record through the shared index', async () => {
+    const { loadEntities } = await import('@metanull/viewer-core')
+    const { itemById } = useInventoryData()
+    const [items] = await loadEntities(['items'])
+    expect(itemById.value).toBeInstanceOf(Map)
+    expect(itemById.value.get(items[0].id)).toBe(items[0])
+  }, 20000)
 
   it('offers the languages the package declares for the site, where the items carry them', () => {
     expect(checkOfferedLanguages(config)).toEqual([])

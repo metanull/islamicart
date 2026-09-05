@@ -24,7 +24,7 @@ const { t } = useI18n()
 
 // ── Active item & language ────────────────────────────────────────────
 
-const item = computed(() => itemById.value[decodeURIComponent(route.params.id)] ?? null)
+const item = computed(() => itemById.value.get(decodeURIComponent(route.params.id)) ?? null)
 
 // The record's language, not the site's. It follows the site language where
 // this item carries it, English where it does not, and the item's first
@@ -155,7 +155,7 @@ const relatedItems = computed(() => {
   const seen = new Set()
   return links
     .map(link => {
-      const it = itemById.value[link.id]
+      const it = itemById.value.get(link.id)
       if (!it || seen.has(it.id)) return null
       seen.add(it.id)
       return { item: it, justifications: link.justifications ?? {} }
