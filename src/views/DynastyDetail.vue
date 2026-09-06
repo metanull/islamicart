@@ -2,6 +2,7 @@
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from '@metanull/viewer-core'
+import { RecordList } from '@metanull/viewer-layout/content'
 import { useInventoryData } from '../composables/useInventoryData.js'
 
 const route = useRoute()
@@ -136,8 +137,21 @@ const relatedItems = computed(() => {
   return items.value.filter(i => i.dynasty_ids.includes(dynasty.value.id))
 })
 
+// The first twelve, in the list's own record contract.
+const relatedRows = computed(() =>
+  relatedItems.value.slice(0, 12).map(rel => ({
+    id: rel.id,
+    image: rel.images?.[0]?.url ?? '',
+    imageAlt: rel.internal_name ?? '',
+    name: mdInline(tr('items', rel.id).name ?? rel.internal_name ?? rel.id),
+    meta: [],
+    badge: rel.type,
+    to: { name: 'item', params: { id: rel.id } },
+  }))
+)
+
 function relatedItemsLink() {
-  return { path: '/permanent-collection/results', query: { dynasty: dynasty.value.id } }
+  return { name: 'permanent-collection-results', query: { dynasty: dynasty.value.id } }
 }
 
 // ── Timeline (historical cross-reference over the dynasty's date range) ─
@@ -221,25 +235,7 @@ function back() {
       <!-- Related items -->
       <div v-if="relatedItems.length" class="related">
         <h2 class="sub-section-title">{{ $t('islamicart.dynasty.relatedItems') }}</h2>
-        <ul class="related-list item-list">
-          <li
-            v-for="rel in relatedItems.slice(0, 12)"
-            :key="rel.id"
-            class="item-list-row"
-            @click="$router.push(`/item/${encodeURIComponent(rel.id)}`)"
-          >
-            <div class="item-thumb">
-              <img v-if="rel.images?.length" :src="rel.images[0].url" :alt="rel.internal_name ?? ''" loading="lazy" />
-              <div v-else class="item-thumb-placeholder" />
-            </div>
-            <div class="item-list-info">
-              <div class="item-list-name">{{ rel.internal_name ?? rel.id }}</div>
-              <div class="item-list-meta">
-                <span class="item-type-badge">{{ rel.type }}</span>
-              </div>
-            </div>
-          </li>
-        </ul>
+        <RecordList :records="relatedRows" />
         <RouterLink v-if="relatedItems.length > 12" :to="relatedItemsLink()" class="see-all-link">
           {{ $t('islamicart.action.seeAll') }} {{ relatedItems.length }} {{ $t('islamicart.results.objectsAndMonuments') }} →
         </RouterLink>
