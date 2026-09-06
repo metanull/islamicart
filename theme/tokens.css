@@ -70,4 +70,33 @@
   --mwnf-footer-background: #e0b700;
   --mwnf-footer-text-color: #4c4214;
   --mwnf-footer-text-size: 0.75rem;
+
+  /* ---------- Content: the record page ---------- */
+  /* The sheet as the legacy site set it: a bordered table with gold-tinted
+     label cells, uppercase section headings, a rule above the credits. */
+  --mwnf-sheet-text-size: 0.875rem;
+  --mwnf-sheet-label-size: 0.8125rem;
+  --mwnf-sheet-label-weight: 500;
+  --mwnf-sheet-label-color: #4c420e;
+  --mwnf-sheet-label-background: #fdfbed;
+  --mwnf-sheet-cell-border: 1px solid #a19869;
+  --mwnf-sheet-toggle-color: #222222;
+  --mwnf-sheet-term-color: #4c420e;
+  --mwnf-sheet-term-underline: #e0b700;
+  --mwnf-sheet-section-border: 1px solid #a19869;
+  --mwnf-sheet-heading-size: 0.8125rem;
+  --mwnf-sheet-heading-color: #4c420e;
+  --mwnf-credits-border: 2px solid #4c420e;
+  --mwnf-credits-color: #4c4000;
+  --mwnf-languages-button-border: 1px solid #a19869;
+  --mwnf-languages-active-background: #ffd600;
+  --mwnf-languages-active-text: #4c4214;
+  --mwnf-media-background: #f0ebdc;
+  --mwnf-media-thumb-active-border: 2px solid #e0b700;
+  --mwnf-media-caption-color: #4c4000;
+  --mwnf-popover-border: 2px solid #e0b700;
+  --mwnf-popover-title-background: #4c420e;
+  --mwnf-list-row-border: 1px solid #e8dcc8;
+  --mwnf-list-thumb-background: #f0ebdc;
+  --mwnf-list-meta-color: #4c4000;
 }
