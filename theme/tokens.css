@@ -99,4 +99,35 @@
   --mwnf-list-row-border: 1px solid #e8dcc8;
   --mwnf-list-thumb-background: #f0ebdc;
   --mwnf-list-meta-color: #4c4000;
+
+  /* ---------- Content: the lists ---------- */
+  /* Filter panel, facets, summary line and pagination as the legacy site
+     drew them: ivory controls with the gold border, the active page in gold. */
+  --mwnf-filter-padding: 20px;
+  --mwnf-filter-border: 1px solid #a19869;
+  --mwnf-filter-background: #ffffff;
+  --mwnf-filter-title-size: 0.75rem;
+  --mwnf-filter-title-color: #4c4000;
+  --mwnf-filter-label-size: 0.75rem;
+  --mwnf-filter-label-color: #4c4000;
+  --mwnf-filter-control-border: 1px solid #a19869;
+  --mwnf-filter-control-background: #fdfbed;
+  --mwnf-filter-control-text: #222222;
+  --mwnf-filter-button-background: #ffd600;
+  --mwnf-filter-button-border: none;
+  --mwnf-filter-button-text: #4c4214;
+  --mwnf-filter-reset-background: #a19869;
+  --mwnf-filter-reset-text: #222222;
+  --mwnf-summary-size: 0.75rem;
+  --mwnf-summary-color: #4c4000;
+  --mwnf-summary-value-color: #222222;
+  --mwnf-summary-border: 1px solid #a19869;
+  --mwnf-pagination-size: 0.75rem;
+  --mwnf-pagination-button-border: 1px solid #a19869;
+  --mwnf-pagination-button-background: #ffffff;
+  --mwnf-pagination-button-text: #222222;
+  --mwnf-pagination-button-hover-background: #fdfbed;
+  --mwnf-pagination-active-background: #ffd600;
+  --mwnf-pagination-active-text: #4c4214;
+  --mwnf-pagination-position-color: #4c4000;
 }
