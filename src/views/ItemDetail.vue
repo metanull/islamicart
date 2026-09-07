@@ -5,6 +5,7 @@ import { timelineLinkFor } from '@metanull/viewer-core'
 import { MediaGallery, RecordLanguages, SheetSection } from '@metanull/viewer-layout/content'
 import { RecordView } from '@metanull/viewer-layout/views'
 import { useInventoryData } from '../composables/useInventoryData.js'
+import { artIntroLinksForItem } from '../composables/artIntro.js'
 import { exhibitionLinksForItem } from '../composables/exhibitions.js'
 import { itemSheet } from '../composables/sheet.js'
 
@@ -18,7 +19,7 @@ import { itemSheet } from '../composables/sheet.js'
 defineProps({ id: { type: String, required: true } })
 
 const router = useRouter()
-const { artIntroLinksForItem, dynasties, items, md, mdInline, tr } = useInventoryData()
+const { dynasties, items, md, mdInline, tr } = useInventoryData()
 
 function back() {
   if (window.history.length > 2) router.back()
