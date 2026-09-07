@@ -229,7 +229,7 @@ function back() {
       <!-- History -->
       <section v-if="text.history" class="content-section">
         <h2 class="content-section-heading">{{ $t('islamicart.dynasty.history') }}</h2>
-        <div v-html="md(text.history, glossaryEntries)" class="prose" />
+        <div v-html="md(text.history, { glossary: glossaryEntries })" class="prose" />
       </section>
 
       <!-- Related items -->
@@ -245,8 +245,8 @@ function back() {
     <!-- Glossary term modal, mirrors ItemDetail.vue's -->
     <div v-if="activeGlossaryTerm" class="gloss-modal-overlay" @click.self="closeGlossaryModal">
       <div class="gloss-modal">
-        <button class="gloss-modal-close" @click="closeGlossaryModal" :aria-label="$t('islamicart.glossary.close')">✕</button>
-        <h2 class="gloss-modal-heading">{{ $t('islamicart.glossary.heading') }}</h2>
+        <button class="gloss-modal-close" @click="closeGlossaryModal" :aria-label="$t('record.glossary.close')">✕</button>
+        <h2 class="gloss-modal-heading">{{ $t('record.glossary.heading') }}</h2>
         <h3 class="gloss-modal-term">{{ activeGlossaryTerm.spelling }}</h3>
         <p class="gloss-modal-definition">{{ activeGlossaryTerm.definition }}</p>
       </div>

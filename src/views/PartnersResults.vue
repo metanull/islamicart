@@ -16,12 +16,12 @@ const filterType = computed(() => (route.query.type === 'institution' ? 'institu
 const otherType = computed(() => (filterType.value === 'museum' ? 'institution' : 'museum'))
 
 // Both branches spell their name out. A single name built from the type
-// (`islamicart.partner.` + type) would resolve at run time and be invisible to
+// (`partner.list.` + type) would resolve at run time and be invisible to
 // the check that every name a page asks for exists.
 const typeHeading = computed(() =>
   filterType.value === 'museum'
-    ? t('islamicart.partner.museums')
-    : t('islamicart.partner.institutions')
+    ? t('partner.list.museums')
+    : t('partner.list.institutions')
 )
 const associatedLabel = computed(() =>
   filterType.value === 'museum'
@@ -87,7 +87,7 @@ function partnerLink(partner) {
 
 <template>
   <div>
-    <RouterLink to="/partners" class="back-link">‹ {{ $t('islamicart.partner.backLink') }}</RouterLink>
+    <RouterLink to="/partners" class="back-link">‹ {{ $t('partner.nav.back') }}</RouterLink>
 
     <h1 class="section-heading">
       {{ typeHeading }}
@@ -96,7 +96,7 @@ function partnerLink(partner) {
 
     <div class="content-box">
       <p class="result-count">
-        {{ $t('islamicart.results.partnersFound') }}: {{ totalCount }} —
+        {{ $t('partner.list.partnersFound') }}: {{ totalCount }} —
         <RouterLink :to="{ path: '/partners/results', query: { type: otherType, project } }">
           {{ otherTypeLabel }}
         </RouterLink>

@@ -45,11 +45,11 @@ function search() {
   errorMessage.value = ''
 
   if (!selectedCountry.value && !(selectedBegin.value && selectedEnd.value)) {
-    errorMessage.value = t('islamicart.timeline.errorSelect')
+    errorMessage.value = t('timeline.form.errorSelect')
     return
   }
   if (selectedBegin.value && selectedEnd.value && Number(selectedBegin.value) >= Number(selectedEnd.value)) {
-    errorMessage.value = t('islamicart.timeline.errorPeriod')
+    errorMessage.value = t('timeline.form.errorPeriod')
     return
   }
 
@@ -74,27 +74,27 @@ function search() {
             <th><label for="tl-country">{{ $t('islamicart.filter.country') }}</label></th>
             <td>
               <select id="tl-country" v-model="selectedCountry" style="width:280px">
-                <option value="" disabled>{{ $t('islamicart.timeline.selectCountry') }}</option>
-                <option value="all">{{ $t('islamicart.timeline.allCountries') }}</option>
+                <option value="" disabled>{{ $t('timeline.form.selectCountry') }}</option>
+                <option value="all">{{ $t('timeline.form.allCountries') }}</option>
                 <option v-for="c in availableCountries" :key="c.id" :value="c.id">{{ c.name }}</option>
               </select>
             </td>
           </tr>
           <tr>
-            <th><label for="tl-begin">{{ $t('islamicart.timeline.startDate') }}</label></th>
+            <th><label for="tl-begin">{{ $t('timeline.form.startDate') }}</label></th>
             <td>
               <select id="tl-begin" v-model="selectedBegin" style="width:160px">
-                <option value="">{{ $t('islamicart.filter.none') }}</option>
-                <option v-for="y in centuryMarks" :key="y" :value="y">{{ y }} {{ $t('islamicart.timeline.yearSuffix') }}</option>
+                <option value="">{{ $t('timeline.form.none') }}</option>
+                <option v-for="y in centuryMarks" :key="y" :value="y">{{ y }} {{ $t('timeline.form.yearSuffix') }}</option>
               </select>
             </td>
           </tr>
           <tr>
-            <th><label for="tl-end">{{ $t('islamicart.timeline.endDate') }}</label></th>
+            <th><label for="tl-end">{{ $t('timeline.form.endDate') }}</label></th>
             <td>
               <select id="tl-end" v-model="selectedEnd" style="width:160px">
-                <option value="">{{ $t('islamicart.filter.none') }}</option>
-                <option v-for="y in centuryMarks" :key="y" :value="y">{{ y }} {{ $t('islamicart.timeline.yearSuffix') }}</option>
+                <option value="">{{ $t('timeline.form.none') }}</option>
+                <option v-for="y in centuryMarks" :key="y" :value="y">{{ y }} {{ $t('timeline.form.yearSuffix') }}</option>
               </select>
             </td>
           </tr>

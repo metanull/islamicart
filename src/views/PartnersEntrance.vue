@@ -19,7 +19,7 @@ function browse(type, project) {
       <table class="form-table filter-table">
         <tbody>
           <tr>
-            <th><label>{{ $t('islamicart.partner.museums') }}</label></th>
+            <th><label>{{ $t('partner.list.museums') }}</label></th>
             <td>
               <button class="btn" @click="browse('museum', 'ISL')">{{ $t('islamicart.action.browseMuseums') }} →</button>
             </td>
@@ -40,7 +40,7 @@ function browse(type, project) {
       <table class="form-table filter-table">
         <tbody>
           <tr>
-            <th><label>{{ $t('islamicart.partner.museums') }}</label></th>
+            <th><label>{{ $t('partner.list.museums') }}</label></th>
             <td>
               <button class="btn" @click="browse('museum', 'EPM')">{{ $t('islamicart.action.browseMuseums') }} →</button>
             </td>

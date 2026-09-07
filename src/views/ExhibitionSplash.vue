@@ -49,11 +49,11 @@ function back() {
 <template>
   <div v-if="!exhibition" class="content-box not-found">
     <p>{{ $t('islamicart.notFound.exhibition') }}</p>
-    <router-link to="/exhibitions">← {{ $t('islamicart.exhibition.returnLink') }}</router-link>
+    <router-link to="/exhibitions">← {{ $t('exhibition.chapter.returnToExhibitions') }}</router-link>
   </div>
 
   <div v-else>
-    <a class="back-link" href="#" @click.prevent="back">← {{ $t('islamicart.exhibition.backLink') }}</a>
+    <a class="back-link" href="#" @click.prevent="back">← {{ $t('exhibition.chapter.returnToExhibitions') }}</a>
 
     <h1 class="section-heading" v-html="mdInline(text.title ?? exhibition.internal_name)" />
 
@@ -70,7 +70,7 @@ function back() {
           class="theme-row"
           @click="$router.push(`/exhibitions/${exhibition.id}/introduction`)"
         >
-          <span class="theme-name">{{ $t('islamicart.exhibition.introduction') }}</span>
+          <span class="theme-name">{{ $t('exhibition.nav.introduction') }}</span>
           <span class="theme-arrow">→</span>
         </li>
         <li

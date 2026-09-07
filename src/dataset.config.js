@@ -1,4 +1,4 @@
-import { languageLabels, offeredLanguages, useDataPackage } from '@metanull/viewer-core'
+import { languageLabels, offeredLanguages, sectionMeta, useDataPackage } from '@metanull/viewer-core'
 import SiteShell from './SiteShell.vue'
 
 // The whole declaration of this website. Before it mounts, the website reads
@@ -16,8 +16,10 @@ const languages = offeredLanguages()
 
 // A route says what section it is (kebab-case, matching the nav entry in
 // SiteShell.vue), and the shell reads it through viewer-core's `useSection()`
-// for the active menu entry — never derived from the path.
-const meta = (section, entities) => ({ section, entities })
+// for the active menu entry — never derived from the path. This site has no
+// chrome entities every page loads regardless of section, so `sectionMeta()`
+// is called with none.
+const meta = sectionMeta()
 
 export default {
   // The dataset package this website renders. Must match the alias in
@@ -53,109 +55,109 @@ export default {
       path: '/',
       name: 'home',
       component: () => import('./views/Home.vue'),
-      meta: meta('home', ['items']),
+      meta: meta('home', 'items'),
     },
     {
       path: '/permanent-collection',
       name: 'permanent-collection',
       component: () => import('./views/PcEntrance.vue'),
-      meta: meta('permanent-collection', ['items', 'countries', 'dynasties', 'partners']),
+      meta: meta('permanent-collection', 'items', 'countries', 'dynasties', 'partners'),
     },
     {
       path: '/permanent-collection/results',
       name: 'permanent-collection-results',
       component: () => import('./views/PcList.vue'),
-      meta: meta('permanent-collection', ['items', 'countries', 'dynasties', 'partners']),
+      meta: meta('permanent-collection', 'items', 'countries', 'dynasties', 'partners'),
     },
     {
       path: '/database',
       name: 'database',
       component: () => import('./views/Database.vue'),
-      meta: meta('database', []),
+      meta: meta('database'),
     },
     {
       path: '/database/results',
       name: 'database-results',
       component: () => import('./views/DatabaseResults.vue'),
-      meta: meta('database', ['items', 'countries', 'dynasties', 'partners']),
+      meta: meta('database', 'items', 'countries', 'dynasties', 'partners'),
     },
     {
       path: '/timeline',
       name: 'timeline',
       component: () => import('./views/TimelineEntrance.vue'),
-      meta: meta('timeline', ['timelines', 'timeline_events', 'countries']),
+      meta: meta('timeline', 'timelines', 'timeline_events', 'countries'),
     },
     {
       path: '/timeline/results',
       name: 'timeline-results',
       component: () => import('./views/TimelineResults.vue'),
-      meta: meta('timeline', ['timelines', 'timeline_events', 'countries']),
+      meta: meta('timeline', 'timelines', 'timeline_events', 'countries'),
     },
     {
       path: '/partners',
       name: 'partners',
       component: () => import('./views/PartnersEntrance.vue'),
-      meta: meta('partners', ['items', 'partners', 'countries']),
+      meta: meta('partners', 'items', 'partners', 'countries'),
     },
     {
       path: '/partners/results',
       name: 'partners-results',
       component: () => import('./views/PartnersResults.vue'),
-      meta: meta('partners', ['partners', 'countries']),
+      meta: meta('partners', 'partners', 'countries'),
     },
     {
       path: '/partner/:id',
       name: 'partner',
       component: () => import('./views/PartnerDetail.vue'),
-      meta: meta('partners', ['partners', 'items', 'countries']),
+      meta: meta('partners', 'partners', 'items', 'countries'),
     },
     {
       path: '/dynasties',
       name: 'dynasties',
       component: () => import('./views/Dynasties.vue'),
-      meta: meta('dynasties', ['dynasties', 'items']),
+      meta: meta('dynasties', 'dynasties', 'items'),
     },
     {
       path: '/dynasty/:id',
       name: 'dynasty',
       component: () => import('./views/DynastyDetail.vue'),
-      meta: meta('dynasties', ['dynasties', 'items', 'collections']),
+      meta: meta('dynasties', 'dynasties', 'items', 'collections'),
     },
     {
       path: '/artistic-introduction',
       name: 'artistic-introduction',
       component: () => import('./views/ArtIntroEntrance.vue'),
-      meta: meta('artistic-introduction', ['collections']),
+      meta: meta('artistic-introduction', 'collections'),
     },
     {
       path: '/artistic-introduction/:themeId',
       name: 'artistic-introduction-theme',
       component: () => import('./views/ArtIntroTheme.vue'),
-      meta: meta('artistic-introduction', ['collections', 'items', 'partners', 'dynasties']),
+      meta: meta('artistic-introduction', 'collections', 'items', 'partners', 'dynasties'),
     },
     {
       path: '/exhibitions',
       name: 'exhibitions',
       component: () => import('./views/ExhibitionsEntrance.vue'),
-      meta: meta('exhibitions', ['collections']),
+      meta: meta('exhibitions', 'collections'),
     },
     {
       path: '/exhibitions/:exhibitionId',
       name: 'exhibition',
       component: () => import('./views/ExhibitionSplash.vue'),
-      meta: meta('exhibitions', ['collections']),
+      meta: meta('exhibitions', 'collections'),
     },
     {
       path: '/exhibitions/:exhibitionId/introduction',
       name: 'exhibition-introduction',
       component: () => import('./views/ExhibitionIntroduction.vue'),
-      meta: meta('exhibitions', ['collections', 'items', 'partners', 'dynasties']),
+      meta: meta('exhibitions', 'collections', 'items', 'partners', 'dynasties'),
     },
     {
       path: '/exhibitions/:exhibitionId/theme/:themeId',
       name: 'exhibition-theme',
       component: () => import('./views/ExhibitionTheme.vue'),
-      meta: meta('exhibitions', ['collections', 'items', 'partners', 'dynasties']),
+      meta: meta('exhibitions', 'collections', 'items', 'partners', 'dynasties'),
     },
     {
       // The item sheet is reached from both the curated Permanent Collection
@@ -166,7 +168,7 @@ export default {
       name: 'item',
       component: () => import('./views/ItemDetail.vue'),
       props: (route) => ({ id: decodeURIComponent(route.params.id) }),
-      meta: meta('database', ['items', 'dynasties', 'collections', 'partners', 'countries']),
+      meta: meta('database', 'items', 'dynasties', 'collections', 'partners', 'countries'),
     },
   ],
 
