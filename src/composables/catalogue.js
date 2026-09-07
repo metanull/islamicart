@@ -37,10 +37,16 @@ export function inScope(item, includeEpm) {
 // What each searches is the legacy form's, field for field. `text` is the
 // record's translation in the search language, with English behind it.
 
+// Decision D3: a keyword equal to a country's name also matches every item
+// held in that country (`countryExpansion`, legacy's `getKeywordCountry`) —
+// on the same two fields legacy's own expansion applied to, so both getters
+// carry the raw id the expansion resolves to, never a label.
 export const SEARCH_FIELDS = {
-  keyword: (item, text) => [text.name ?? item.internal_name, text.alternate_name, text.description, ...(item.tags ?? [])],
+  keyword: (item, text) => [
+    text.name ?? item.internal_name, text.alternate_name, text.description, item.country_id, ...(item.tags ?? []),
+  ],
   name: (item, text) => text.name ?? item.internal_name,
-  location: (item, text) => text.location,
+  location: (item, text) => [text.location, item.country_id],
   provenance: (item, text) => text.provenance,
   dynasty: (item) => (item.dynasty_ids ?? []).map(dynastyLabel),
   patron: (item, text) => text.patrons ?? text.initial_owner,
@@ -54,9 +60,31 @@ export const SEARCH_FIELDS = {
 }
 
 /**
- * The field options of the search form, in legacy's order. `value` is the
- * query parameter and never a text; each label is written out, because the
- * check that every name resolves can only see the ones it can read.
+ * The field options of the search form, in legacy's order. `key`/`value` is
+ * the query parameter and never a text; each label is an entry name. Shared
+ * by `composables/search.js`'s `SearchFormView` spec (which resolves a
+ * `fields` entry itself, through its own `t`) and this site's own selects
+ * (the results page's refine row, resolved here through `useSearchFields`).
+ */
+export const SEARCH_FIELD_ENTRIES = [
+  { key: 'keyword', label: 'catalogue.field.keywords' },
+  { key: 'name', label: 'sheet.field.name' },
+  { key: 'location', label: 'sheet.field.location' },
+  { key: 'provenance', label: 'sheet.field.provenance' },
+  { key: 'dynasty', label: 'catalogue.facet.periodDynasty' },
+  { key: 'patron', label: 'catalogue.field.patron' },
+  { key: 'artist', label: 'catalogue.field.artist' },
+  { key: 'material', label: 'catalogue.field.material' },
+  { key: 'other', label: 'catalogue.field.other' },
+]
+
+/**
+ * The same nine fields, resolved: this site's own selects (the results
+ * page's refine row) read `value`/`label` pairs directly, unlike
+ * `SearchFormView`'s `fields`, which the view resolves itself through its
+ * own `t`. Each branch spells its own name in full — a name read off
+ * `SEARCH_FIELD_ENTRIES.label` would resolve at run time, invisible to the
+ * check that every name a page asks for exists.
  */
 export function useSearchFields() {
   const { t } = useI18n()
