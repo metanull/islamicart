@@ -65,6 +65,16 @@ describe('website smoke test', () => {
     expect(config.extraViews.find((r) => r.name === 'item').meta.entities).toContain('items')
   })
 
+  it('declares the section every route belongs to', () => {
+    // The menu highlights the current section by reading `meta.section`
+    // (viewer-core's `useSection()`); a route without one leaves the menu
+    // with nothing active.
+    for (const route of config.extraViews) {
+      expect(typeof route.meta?.section, route.name).toBe('string')
+      expect(route.meta.section, route.name).not.toBe('')
+    }
+  })
+
   // The record lookups are viewer-core's shared indexes now, and a Map is not
   // an object: `byId(...)[id]` reads as undefined rather than failing, so a
   // page would simply render nothing. This is where that shows.

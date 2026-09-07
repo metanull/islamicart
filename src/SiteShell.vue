@@ -3,7 +3,7 @@
 // over "Islamic Art") supplied through the header slot. All other PageShell
 // props and the update:language event pass through untouched via $attrs.
 import { computed } from 'vue'
-import { useI18n } from '@metanull/viewer-core'
+import { useI18n, useSection } from '@metanull/viewer-core'
 import { PageShell } from '@metanull/viewer-layout'
 
 const { t } = useI18n()
@@ -13,16 +13,19 @@ const { t } = useI18n()
 // installed catalogue, and every name has to be written out where it is used
 // so `viewer-i18n-check` can see it. The config keeps what is not a text —
 // the offered languages — and PageShell receives these links after $attrs, so
-// they take precedence over anything the config still passes.
+// they take precedence over anything the config still passes. Which entry is
+// active is the section the route declares (`meta.section`), read through
+// viewer-core's `useSection()` — never derived from the path.
+const section = useSection()
 const navLinks = computed(() => [
-  { label: t('core.nav.home'), href: '#/' },
-  { label: t('islamicart.nav.permanentCollection'), href: '#/permanent-collection' },
-  { label: t('islamicart.nav.database'), href: '#/database' },
-  { label: t('islamicart.nav.timeline'), href: '#/timeline' },
-  { label: t('islamicart.nav.partners'), href: '#/partners' },
-  { label: t('islamicart.nav.dynasties'), href: '#/dynasties' },
-  { label: t('islamicart.nav.artisticIntroduction'), href: '#/artistic-introduction' },
-  { label: t('islamicart.nav.exhibitions'), href: '#/exhibitions' },
+  { label: t('core.nav.home'), href: '#/', active: section.value === 'home' },
+  { label: t('islamicart.nav.permanentCollection'), href: '#/permanent-collection', active: section.value === 'permanent-collection' },
+  { label: t('islamicart.nav.database'), href: '#/database', active: section.value === 'database' },
+  { label: t('islamicart.nav.timeline'), href: '#/timeline', active: section.value === 'timeline' },
+  { label: t('islamicart.nav.partners'), href: '#/partners', active: section.value === 'partners' },
+  { label: t('islamicart.nav.dynasties'), href: '#/dynasties', active: section.value === 'dynasties' },
+  { label: t('islamicart.nav.artisticIntroduction'), href: '#/artistic-introduction', active: section.value === 'artistic-introduction' },
+  { label: t('islamicart.nav.exhibitions'), href: '#/exhibitions', active: section.value === 'exhibitions' },
 ])
 </script>
 
