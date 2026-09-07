@@ -121,18 +121,6 @@ export default {
       meta: meta('partners', 'partners', 'items', 'countries'),
     },
     {
-      path: '/dynasties',
-      name: 'dynasties',
-      component: () => import('./views/Dynasties.vue'),
-      meta: meta('dynasties', 'dynasties', 'items'),
-    },
-    {
-      path: '/dynasty/:id',
-      name: 'dynasty',
-      component: () => import('./views/DynastyDetail.vue'),
-      meta: meta('dynasties', 'dynasties', 'items', 'collections'),
-    },
-    {
       path: '/artistic-introduction',
       name: 'artistic-introduction',
       component: () => import('./views/ArtIntroEntrance.vue'),

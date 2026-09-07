@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { timelineLinkFor } from '@metanull/viewer-core'
-import { MediaGallery, RecordLanguages, SheetSection } from '@metanull/viewer-layout/content'
+import { DynastyList, MediaGallery, RecordLanguages, SheetSection } from '@metanull/viewer-layout/content'
 import { RecordView } from '@metanull/viewer-layout/views'
 import { useInventoryData } from '../composables/useInventoryData.js'
 import { artIntroLinksForItem } from '../composables/artIntro.js'
@@ -49,16 +49,14 @@ function relatedMedia(record, language) {
   return inLang.length ? inLang : all
 }
 
-// Dynasty cards: the record's own `dynasty_ids`, each merged with its
-// translated fields (name, also_known_as, history) in the sheet's language.
+// Decision D5: the dynasty popout — legacy's `dynasty.php` popup, and the
+// DXA sites' own shape — replaces this website's dynasty cards and the
+// standalone dynasty list/sheet the popout regains only ever needed to
+// exist for. `DynastyList` reads the record's own dynasties and resolves
+// each one's translation itself, through `tr` below.
 const dynastyById = computed(() => new Map((dynasties.value ?? []).map((d) => [d.id, d])))
-function selectedDynasties(record, language) {
-  return (record.dynasty_ids ?? [])
-    .map((id) => {
-      const base = dynastyById.value.get(id)
-      return base ? { ...base, ...tr('dynasties', id, language) } : null
-    })
-    .filter(Boolean)
+function itemDynasties(record) {
+  return (record.dynasty_ids ?? []).map((id) => dynastyById.value.get(id)).filter(Boolean)
 }
 
 const artIntroLinks = (record) =>
@@ -114,20 +112,13 @@ const thgGalleryLinks = (record) =>
         </div>
       </SheetSection>
 
-      <!-- Dynasty cards -->
-      <SheetSection v-if="selectedDynasties(record, language).length" :heading="$t('sheet.field.dynasties')" :dir="dir">
-        <div v-for="d in selectedDynasties(record, language)" :key="d.id" class="dynasty-card">
-          <div class="dynasty-header">
-            <span class="dynasty-name" v-html="d.name ? mdInline(d.name) : '—'"></span>
-            <span v-if="d.also_known_as" class="dynasty-aka">{{ $t('islamicart.dynasty.alsoKnownAs') }} {{ d.also_known_as }}</span>
-            <span v-if="d.from_ad || d.to_ad" class="dynasty-dates">
-              {{ d.date_description_ad ?? (d.from_ad + (d.to_ad ? ' – ' + d.to_ad : '')) }}
-            </span>
-          </div>
-          <p v-if="d.history" class="dynasty-history">{{ d.history }}</p>
-          <p v-if="d.area" class="dynasty-area">{{ $t('sheet.field.area') }}: {{ d.area }}</p>
-        </div>
-      </SheetSection>
+      <DynastyList
+        v-if="itemDynasties(record).length"
+        :heading="$t('sheet.field.dynasties')"
+        :dynasties="itemDynasties(record)"
+        :tr="(d) => tr('dynasties', d.id, language)"
+        :dir="dir"
+      />
 
       <SheetSection v-if="artIntroLinks(record).length" :heading="$t('islamicart.nav.artisticIntroduction')">
         <ul class="link-list">
@@ -192,18 +183,4 @@ const thgGalleryLinks = (record) =>
 /* Link lists */
 .link-list { list-style: none; font-size: 13px; padding: 0; margin: 0; }
 .link-list a { color: var(--nav-active); }
-
-/* Dynasty cards */
-.dynasty-card {
-  background: var(--section-bg);
-  border-left: 3px solid var(--accent-dark);
-  padding: 10px 14px;
-  margin-bottom: 8px;
-}
-.dynasty-header { display: flex; flex-wrap: wrap; align-items: baseline; gap: .4rem 1rem; margin-bottom: 4px; }
-.dynasty-name { font-weight: 500; font-size: 14px; }
-.dynasty-aka { font-size: 12px; color: var(--muted); font-style: italic; }
-.dynasty-dates { font-size: 12px; color: var(--muted); margin-left: auto; }
-.dynasty-history { font-size: 13px; line-height: 1.6; color: var(--text); margin: 0 0 4px; }
-.dynasty-area { font-size: 12px; color: var(--muted); margin: 0; }
 </style>
