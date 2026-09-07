@@ -175,6 +175,20 @@ describe('website smoke test', () => {
       await vi.waitFor(() => expect(host.querySelector('.mwnf-essay__panel-name').textContent).not.toBe(initialName))
     }
 
+    // viewer-core 1.12.1 exposes tree.entity, so EssayView reads the theme's
+    // translated title from the collections entity, not the internal_name.
+    // The view reads these texts through the tree's own entity, and a wrong
+    // entity renders internal names silently.
+    const { default: collectionsTranslations } = await import('@metanull/islamicart-data/translations/collections.en.json', { assert: { type: 'json' } })
+    const themeTranslation = collectionsTranslations[theme.id]
+    const essayTitle = host.querySelector('.mwnf-essay__title')
+    expect(essayTitle?.textContent.trim()).toBe(themeTranslation?.title ?? theme.internal_name)
+    expect(essayTitle?.textContent.trim()).not.toBe(theme.internal_name)
+    const essayBody = host.querySelector('.mwnf-essay__body, .mwnf-essay__prose')
+    if (themeTranslation?.description) {
+      expect(essayBody?.textContent.trim().length).toBeGreaterThan(0)
+    }
+
     app.unmount()
   }, 30000)
 
@@ -229,6 +243,20 @@ describe('website smoke test', () => {
     const panelName = host.querySelector('.mwnf-essay__panel-name')
     expect(panelName).not.toBeNull()
     expect(panelName.textContent.trim()).not.toBe('')
+
+    // viewer-core 1.12.1 exposes tree.entity, so EssayView reads the theme's
+    // translated title from the collections entity, not the internal_name.
+    // The view reads these texts through the tree's own entity, and a wrong
+    // entity renders internal names silently.
+    const { default: collectionsTranslations } = await import('@metanull/islamicart-data/translations/collections.en.json', { assert: { type: 'json' } })
+    const themeTranslation = collectionsTranslations[theme.id]
+    const essayTitle = host.querySelector('.mwnf-essay__title')
+    expect(essayTitle?.textContent.trim()).toBe(themeTranslation?.title ?? theme.internal_name)
+    expect(essayTitle?.textContent.trim()).not.toBe(theme.internal_name)
+    const essayBody = host.querySelector('.mwnf-essay__body, .mwnf-essay__prose')
+    if (themeTranslation?.description) {
+      expect(essayBody?.textContent.trim().length).toBeGreaterThan(0)
+    }
 
     app.unmount()
   }, 30000)
