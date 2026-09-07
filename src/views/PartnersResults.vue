@@ -2,87 +2,38 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from '@metanull/viewer-core'
-import { useInventoryData } from '../composables/useInventoryData.js'
+import { PartnerListView } from '@metanull/viewer-layout/views'
+import { partnersResults } from '../composables/partner.js'
+
+// The partner results page is the platform's composed partner list,
+// rendering the spec in composables/partner.js. What is this website's is
+// the heading — the type and project the entrance's own link chose — and
+// the toggle between museums and institutions.
 
 const route = useRoute()
-const {
-  countryLabel,
-  partnerLabel,
-  partners,
-} = useInventoryData()
 const { t } = useI18n()
 
 const filterType = computed(() => (route.query.type === 'institution' ? 'institution' : 'museum'))
 const otherType = computed(() => (filterType.value === 'museum' ? 'institution' : 'museum'))
 
-// Both branches spell their name out. A single name built from the type
-// (`partner.list.` + type) would resolve at run time and be invisible to
-// the check that every name a page asks for exists.
-const typeHeading = computed(() =>
-  filterType.value === 'museum'
-    ? t('partner.list.museums')
-    : t('partner.list.institutions')
-)
-const associatedLabel = computed(() =>
-  filterType.value === 'museum'
-    ? t('islamicart.partner.associatedMuseums')
-    : t('islamicart.partner.associatedInstitutions')
-)
-const noneFoundLabel = computed(() =>
-  filterType.value === 'museum'
-    ? t('islamicart.partner.noMuseums')
-    : t('islamicart.partner.noInstitutions')
-)
-const otherTypeLabel = computed(() =>
-  otherType.value === 'museum'
-    ? t('islamicart.partner.viewMuseums')
-    : t('islamicart.partner.viewInstitutions')
-)
-
-// 'ISL' (Discover Islamic Art, pm_partner_list.php) and 'EPM' (Explore Islamic Art
-// Collections, pm_partner_list_eiac.php) are two entirely separate curated lists in
-// legacy — never merged into one, unlike Permanent Collection/Database.
+// 'ISL' (Discover Islamic Art) and 'EPM' (Explore Islamic Art Collections)
+// are two entirely separate curated lists in legacy — never merged into one,
+// unlike Permanent Collection/Database.
 const project = computed(() => (route.query.project === 'EPM' ? 'EPM' : 'ISL'))
+
+const spec = computed(() => partnersResults(filterType.value, project.value))
+
+// Both branches spell their own name in full, for the same reason the spec
+// factory's do.
+const typeHeading = computed(() =>
+  filterType.value === 'museum' ? t('partner.list.museums') : t('partner.list.institutions')
+)
 const projectLabel = computed(() =>
   project.value === 'EPM' ? t('islamicart.project.explore') : t('islamicart.project.discover')
 )
-
-// Associated tiers are nested under the main "Partners" list per country,
-// mirroring the legacy pm_partner_list.php accordion (level is only present
-// once the exporter's partner-hierarchy join has been re-published; a
-// partner without a level is treated as a main partner).
-const groupedByCountry = computed(() => {
-  const byType = partners.value.filter(p => p.type === filterType.value && p.project_ids?.includes(project.value))
-
-  const countries = new Map()
-  for (const p of byType) {
-    const key = p.country_id ?? ''
-    if (!countries.has(key)) countries.set(key, { main: [], associated: [] })
-    const bucket = countries.get(key)
-    if (p.level === 'associated_partner' || p.level === 'minor_contributor') {
-      bucket.associated.push(p)
-    } else {
-      bucket.main.push(p)
-    }
-  }
-
-  return [...countries.entries()]
-    .map(([countryId, group]) => ({
-      countryId,
-      name: countryId ? countryLabel(countryId) : t('islamicart.results.otherCountry'),
-      main: group.main.sort((a, b) => partnerLabel(a.id).localeCompare(partnerLabel(b.id))),
-      associated: group.associated.sort((a, b) => partnerLabel(a.id).localeCompare(partnerLabel(b.id))),
-    }))
-    .sort((a, b) => a.name.localeCompare(b.name))
-})
-
-const totalCount = computed(() =>
-  groupedByCountry.value.reduce((sum, g) => sum + g.main.length + g.associated.length, 0)
+const otherTypeLabel = computed(() =>
+  otherType.value === 'museum' ? t('islamicart.partner.viewMuseums') : t('islamicart.partner.viewInstitutions')
 )
-
-function partnerLink(partner) {
-  return { path: `/partner/${encodeURIComponent(partner.id)}` }
-}
 </script>
 
 <template>
@@ -95,37 +46,13 @@ function partnerLink(partner) {
     </h1>
 
     <div class="content-box">
-      <p class="result-count">
-        {{ $t('partner.list.partnersFound') }}: {{ totalCount }} —
+      <p class="other-type">
         <RouterLink :to="{ path: '/partners/results', query: { type: otherType, project } }">
           {{ otherTypeLabel }}
         </RouterLink>
       </p>
 
-      <div v-if="groupedByCountry.length" class="country-accordion">
-        <details v-for="group in groupedByCountry" :key="group.countryId" class="country-group" open>
-          <summary class="country-head">
-            <h3>{{ group.name }}</h3>
-          </summary>
-
-          <div class="country-body">
-            <div class="partner-col">
-              <p v-for="p in group.main" :key="p.id">
-                <RouterLink :to="partnerLink(p)">{{ partnerLabel(p.id) }}</RouterLink>
-              </p>
-            </div>
-
-            <div v-if="group.associated.length" class="partner-col associated-col">
-              <p class="associated-label">{{ associatedLabel }}</p>
-              <p v-for="p in group.associated" :key="p.id">
-                <RouterLink :to="partnerLink(p)">{{ partnerLabel(p.id) }}</RouterLink>
-              </p>
-            </div>
-          </div>
-        </details>
-      </div>
-
-      <p v-else class="no-results">{{ noneFoundLabel }}</p>
+      <PartnerListView :spec="spec" />
     </div>
   </div>
 </template>
@@ -133,59 +60,12 @@ function partnerLink(partner) {
 <style scoped>
 .heading-project { font-weight: normal; font-size: 14px; color: var(--muted); }
 
-.result-count {
+.other-type {
   font-family: 'Roboto', sans-serif;
   font-size: 12px;
   color: var(--muted);
   margin-bottom: 12px;
   padding-bottom: 8px;
   border-bottom: 1px solid var(--border);
-}
-
-.no-results { color: var(--muted); font-family: 'Roboto', sans-serif; font-size: 13px; padding: 20px 0; }
-
-.country-group {
-  border-bottom: 1px solid #e8dcc8;
-  padding: 10px 0;
-}
-.country-group:last-child { border-bottom: none; }
-
-.country-head {
-  cursor: pointer;
-  list-style: none;
-}
-.country-head::-webkit-details-marker { display: none; }
-.country-head h3 {
-  display: inline-block;
-  font-size: 15px;
-  font-weight: 500;
-  color: var(--heading);
-  font-family: 'Roboto', sans-serif;
-}
-.country-head h3::before {
-  content: '▸ ';
-  color: var(--accent-dark);
-}
-details[open] > .country-head h3::before { content: '▾ '; }
-
-.country-body {
-  display: flex;
-  gap: 32px;
-  padding: 8px 0 4px 16px;
-  flex-wrap: wrap;
-}
-.partner-col { flex: 1; min-width: 220px; }
-.partner-col p {
-  font-size: 13px;
-  font-family: 'Roboto', sans-serif;
-  padding: 3px 0;
-}
-.associated-label {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--muted);
-  font-weight: bold;
-  margin-bottom: 4px;
 }
 </style>

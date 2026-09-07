@@ -1,194 +1,142 @@
 <script setup>
-import { computed, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { useI18n } from '@metanull/viewer-core'
+import { PartnerMap, RecordLanguages, RelatedRecords, SheetSection } from '@metanull/viewer-layout/content'
+import { RecordView } from '@metanull/viewer-layout/views'
+import { permanentCollection } from '../composables/catalogue.js'
 import { useInventoryData } from '../composables/useInventoryData.js'
+import { partnerSheet } from '../composables/partner.js'
 
-const route = useRoute()
+// The partner profile is the platform's composed record page, rendering the
+// spec in composables/partner.js. What is this website's fills the page's
+// slots: the header — the way back, the type badge, the view-objects action
+// counted from the package's own `item_count` (never a scan of every item),
+// the subtitle — and, after the sheet, the blocks a partner has that an item
+// does not: contact details, logos, the map, and its held items.
+
+defineProps({ id: { type: String, required: true } })
+
 const router = useRouter()
-const { locale, t } = useI18n()
-const {
-  availableLanguages,
-  countryLabel,
-  defaultLang,
-  items,
-  loadTranslations,
-  md,
-  mdInline,
-  partners,
-  tr,
-} = useInventoryData()
+const { countryLabel, items, mdInline } = useInventoryData()
 
-const partner = computed(() => partners.value.find(p => p.id === decodeURIComponent(route.params.id)) ?? null)
-
-// ── Content language (partner translations are loaded on demand, per-lang) ──
-// Follows the global site locale; falls back to the dataset default when the
-// locale has no partner translations.
-
-const activeLang = computed(() => (availableLanguages('items').includes(locale.value) ? locale.value : defaultLang))
-watch(activeLang, lang => loadTranslations('partners', lang), { immediate: true })
-
-// The partner's own curatorial text, in the active content language. Kept
-// clear of `t`, which is this website's interface texts.
-const text = computed(() => tr('partners', partner.value?.id, activeLang.value))
-
-// ── Related items (View Objects / View Monuments) ────────────────────────
-
-const relatedItems = computed(() => {
-  if (!partner.value) return []
-  return items.value.filter(i => i.partner_id === partner.value.id)
-})
-
-const viewItemsLabel = computed(() =>
-  partner.value?.type === 'institution'
-    ? t('islamicart.action.viewMonuments')
-    : t('islamicart.action.viewObjects')
-)
-
-const partnerTypeLabel = computed(() =>
-  partner.value?.type === 'institution'
-    ? t('partner.info.typeInstitution')
-    : t('partner.info.typeMuseum')
-)
-
-function viewItemsLink() {
-  return { path: '/permanent-collection/results', query: { partner: partner.value.id } }
+function back() {
+  if (window.history.length > 2) router.back()
+  else router.push('/partners')
 }
 
-// ── Contact ────────────────────────────────────────────────────────────
+const { t } = useI18n()
 
-const hasContactInfo = computed(() =>
-  !!(text.value.address || text.value.phone || text.value.email || text.value.website || partner.value?.additional_urls?.length)
-)
+function viewItemsLabel(record) {
+  return record.type === 'institution' ? t('islamicart.action.viewMonuments') : t('islamicart.action.viewObjects')
+}
+
+function viewItemsLink(record) {
+  return { name: 'permanent-collection-results', query: { partner: record.id } }
+}
+
+function partnerTypeLabel(record) {
+  return record.type === 'institution' ? t('partner.info.typeInstitution') : t('partner.info.typeMuseum')
+}
 
 function normalizeUrl(url) {
   return url.startsWith('http') ? url : `http://${url}`
 }
 
-const contactPersons = computed(() => {
-  if (!partner.value) return []
-  return [partner.value.contact_person_1, partner.value.contact_person_2].filter(
-    cp => cp && (cp.name || cp.title)
-  )
-})
-
-// ── Map (OpenStreetMap embed — no API key required) ───────────────────────
-
-const mapEmbedUrl = computed(() => {
-  if (partner.value?.type !== 'museum') return null
-  const { latitude: lat, longitude: lon } = partner.value
-  if (lat == null || lon == null) return null
-  const delta = 0.01
-  const bbox = [lon - delta, lat - delta, lon + delta, lat + delta].join(',')
-  return `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat},${lon}`
-})
-
-function imageCredit(img) {
-  const parts = []
-  if (img.copyright) parts.push(`© ${img.copyright}`)
-  if (img.photographer) parts.push(img.photographer)
-  return parts.join(' — ')
+function contactPersons(record) {
+  return [record.contact_person_1, record.contact_person_2].filter((cp) => cp && (cp.name || cp.title))
 }
 
-function back() {
-  if (window.history.length > 2) {
-    router.back()
-  } else {
-    router.push('/partners')
-  }
+function hasContactInfo(record, text) {
+  return Boolean(text.address || text.phone || text.email || text.website || record.additional_urls?.length)
+}
+
+// The held items, in the Permanent Collection's own row shape
+// (composables/catalogue.js) — the reverse of `item.partner_id`, since a
+// partner carries no forward list of the items it holds.
+function heldItems(record) {
+  return items.value.filter((i) => i.partner_id === record.id).map(permanentCollection.record)
 }
 </script>
 
 <template>
-  <div v-if="!partner" class="content-box not-found">
-    <p>{{ $t('partner.nav.notFound') }}</p>
-    <router-link to="/partners">← {{ $t('partner.nav.back') }}</router-link>
-  </div>
+  <RecordView :spec="partnerSheet" :id="id" class="detail content-box">
+    <template #header="{ record, text, language, languages, select, dir }">
+      <a class="back-link" href="#" @click.prevent="back">← {{ $t('partner.nav.back') }}</a>
 
-  <div v-else class="detail-wrap">
-    <a class="back-link" href="#" @click.prevent="back">← {{ $t('partner.nav.back') }}</a>
-
-    <div class="detail content-box">
-      <div class="detail-type-badge">{{ partnerTypeLabel }}</div>
-
-      <h1 class="detail-title" v-html="mdInline(text.name ?? partner.id)" />
-      <h2 v-if="text.city || partner.country_id" class="detail-subtitle">
-        <template v-if="text.city">{{ text.city }}<template v-if="partner.country_id">, </template></template>
-        <template v-if="partner.country_id">{{ countryLabel(partner.country_id) }}</template>
+      <div class="detail-type-badge">{{ partnerTypeLabel(record) }}</div>
+      <RecordLanguages :languages="languages" :language="language" @select="select" />
+      <h1 class="detail-title" :dir="dir" v-html="mdInline(text.name ?? record.internal_name ?? record.id)" />
+      <h2 v-if="text.city || record.country_id" class="detail-subtitle">
+        <template v-if="text.city">{{ text.city }}<template v-if="record.country_id">, </template></template>
+        <template v-if="record.country_id">{{ countryLabel(record.country_id) }}</template>
       </h2>
 
-      <!-- View objects / monuments -->
-      <div v-if="relatedItems.length" class="view-items-row">
-        <RouterLink :to="viewItemsLink()" class="btn">{{ viewItemsLabel }} ({{ relatedItems.length }}) →</RouterLink>
+      <div v-if="record.item_count" class="view-items-row">
+        <RouterLink :to="viewItemsLink(record)" class="btn">
+          {{ viewItemsLabel(record) }} ({{ record.item_count }}) →
+        </RouterLink>
         <a v-if="text.website" :href="normalizeUrl(text.website)" target="_blank" rel="noopener" class="homepage-link">
           {{ $t('islamicart.action.visitWebsite') }} ↗
         </a>
       </div>
+    </template>
 
-      <!-- Images -->
-      <div v-if="partner.images?.length" class="images">
-        <figure v-for="(img, i) in partner.images" :key="i">
-          <img :src="img.url" :alt="img.alt_text ?? ''" loading="lazy" class="detail-img" />
-          <figcaption v-if="img.alt_text || imageCredit(img)">
-            <span v-if="img.alt_text">{{ img.alt_text }}</span>
-            <span v-if="imageCredit(img)" class="photo-credit">{{ imageCredit(img) }}</span>
-          </figcaption>
-        </figure>
-      </div>
-
-      <!-- About -->
-      <section v-if="text.description" class="content-section">
-        <h2 class="content-section-heading">{{ $t('partner.info.about') }}</h2>
-        <div v-html="md(text.description)" class="prose" />
-      </section>
-
-      <!-- Contact -->
-      <section v-if="hasContactInfo || contactPersons.length" class="content-section">
-        <h2 class="content-section-heading">{{ $t('partner.info.contact') }}</h2>
-
-        <div v-if="hasContactInfo" class="contact-block">
+    <template #after-sheet="{ record, text, dir }">
+      <SheetSection v-if="hasContactInfo(record, text) || contactPersons(record).length" :heading="$t('partner.info.contact')" :dir="dir">
+        <div v-if="hasContactInfo(record, text)" class="contact-block">
           <p v-if="text.address" class="contact-address">{{ text.address }}</p>
           <p v-if="text.phone">{{ $t('partner.info.phone') }}: {{ text.phone }}</p>
           <p v-if="text.email"><a :href="`mailto:${text.email}`">{{ text.email }}</a></p>
           <p v-if="text.website">
             <a :href="normalizeUrl(text.website)" target="_blank" rel="noopener">{{ text.website }}</a>
-            <template v-for="(u, i) in partner.additional_urls" :key="i">
+            <template v-for="(u, i) in record.additional_urls" :key="i">
               &nbsp;|&nbsp;<a :href="normalizeUrl(u.url)" target="_blank" rel="noopener">{{ u.title ?? u.url }}</a>
             </template>
           </p>
         </div>
 
-        <div v-for="(cp, i) in contactPersons" :key="i" class="contact-block contact-person">
+        <div v-for="(cp, i) in contactPersons(record)" :key="i" class="contact-block contact-person">
           <p v-if="cp.title" class="contact-person-title">{{ cp.title }}</p>
           <p v-if="cp.name">{{ cp.name }}</p>
           <p v-if="cp.phone">{{ $t('partner.info.phone') }}: {{ cp.phone }}</p>
           <p v-if="cp.fax">{{ $t('partner.info.fax') }}: {{ cp.fax }}</p>
           <p v-if="cp.email"><a :href="`mailto:${cp.email}`">{{ cp.email }}</a></p>
         </div>
-      </section>
+      </SheetSection>
 
-      <!-- Logos -->
-      <section v-if="partner.logos?.length" class="content-section">
-        <h2 class="content-section-heading">{{ $t('partner.info.logo') }}</h2>
+      <SheetSection v-if="record.logos?.length" :heading="$t('partner.info.logo')" :dir="dir">
         <div class="logos">
-          <img v-for="(logo, i) in partner.logos" :key="i" :src="logo.url" :alt="logo.alt_text ?? ''" class="logo-img" />
+          <img v-for="(logo, i) in record.logos" :key="i" :src="logo.url" :alt="logo.alt_text ?? ''" class="logo-img" />
         </div>
-      </section>
+      </SheetSection>
 
-      <!-- Map -->
-      <section v-if="mapEmbedUrl" class="content-section">
-        <h2 class="content-section-heading">{{ $t('partner.map.map') }}</h2>
-        <iframe class="map-frame" :src="mapEmbedUrl" loading="lazy" :title="$t('partner.map.onTheMap')" />
-      </section>
-    </div>
-  </div>
+      <!-- Legacy showed the map for a museum's own building, never an
+           institution's (which may cover a whole country's monuments). -->
+      <SheetSection v-if="record.type === 'museum'" :heading="$t('partner.map.map')" :dir="dir">
+        <PartnerMap
+          :latitude="record.latitude"
+          :longitude="record.longitude"
+          :zoom="record.map_zoom ?? 15"
+          map-title-entry="partner.map.map"
+          map-of-entry="partner.map.mapOf"
+          open-map-link-entry="exhibition.action.openInOpenStreetMap"
+          :label="text.name ?? record.internal_name ?? record.id"
+        />
+      </SheetSection>
+    </template>
+
+    <template #related="{ record }">
+      <RelatedRecords
+        v-if="heldItems(record).length"
+        :heading="$t('record.related.items')"
+        :records="heldItems(record)"
+        variant="list"
+      />
+    </template>
+  </RecordView>
 </template>
 
 <style scoped>
-.not-found { color: var(--muted); font-family: 'Roboto', sans-serif; font-size: 13px; }
-
-.detail-wrap { display: flex; flex-direction: column; gap: 10px; }
-
 .detail-type-badge {
   display: inline-block;
   font-size: 10px;
@@ -197,7 +145,7 @@ function back() {
   color: var(--heading);
   border: 1px solid var(--accent-dark);
   padding: 2px 8px;
-  margin-bottom: 10px;
+  margin: 10px 0;
   font-family: 'Roboto', sans-serif;
 }
 
@@ -205,7 +153,7 @@ function back() {
   font-size: 24px;
   font-weight: 400;
   color: var(--heading);
-  margin-bottom: 4px;
+  margin: 10px 0 4px;
   line-height: 1.3;
   font-family: 'Roboto', sans-serif;
 }
@@ -231,50 +179,6 @@ function back() {
   font-family: 'Roboto', sans-serif;
 }
 
-/* Images */
-.images {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-bottom: 20px;
-}
-.images figure { flex-shrink: 0; }
-.detail-img {
-  width: 180px;
-  height: 140px;
-  object-fit: cover;
-  border: 1px solid var(--border);
-  display: block;
-}
-.images figcaption {
-  font-size: 11px;
-  color: var(--muted);
-  margin-top: 4px;
-  width: 180px;
-  font-family: 'Roboto', sans-serif;
-}
-.photo-credit { display: block; }
-
-/* Content sections */
-.content-section {
-  margin-bottom: 20px;
-  padding-top: 16px;
-  border-top: 1px solid var(--border);
-}
-.content-section-heading {
-  font-size: 13px;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-  color: var(--heading);
-  margin-bottom: 10px;
-  font-family: 'Roboto', sans-serif;
-}
-
-.prose { font-size: 14px; line-height: 1.7; color: var(--text); font-family: 'Roboto', sans-serif; }
-.prose :deep(p) { margin: 0 0 .75em; }
-.prose :deep(p:last-child) { margin-bottom: 0; }
-
 .contact-block {
   font-size: 13px;
   line-height: 1.7;
@@ -291,10 +195,4 @@ function back() {
 
 .logos { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
 .logo-img { max-height: 80px; max-width: 200px; object-fit: contain; }
-
-.map-frame {
-  width: 100%;
-  height: 380px;
-  border: 1px solid var(--border);
-}
 </style>
