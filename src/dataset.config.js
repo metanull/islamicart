@@ -14,6 +14,11 @@ const { manifest } = useDataPackage()
 // touching the site language.
 const languages = offeredLanguages()
 
+// A route says what section it is (kebab-case, matching the nav entry in
+// SiteShell.vue), and the shell reads it through viewer-core's `useSection()`
+// for the active menu entry — never derived from the path.
+const meta = (section, entities) => ({ section, entities })
+
 export default {
   // The dataset package this website renders. Must match the alias in
   // vite.config.js and the dependency in package.json.
@@ -48,115 +53,119 @@ export default {
       path: '/',
       name: 'home',
       component: () => import('./views/Home.vue'),
-      meta: { entities: ['items'] },
+      meta: meta('home', ['items']),
     },
     {
       path: '/permanent-collection',
       name: 'permanent-collection',
       component: () => import('./views/PcEntrance.vue'),
-      meta: { entities: ['items', 'countries', 'dynasties', 'partners'] },
+      meta: meta('permanent-collection', ['items', 'countries', 'dynasties', 'partners']),
     },
     {
       path: '/permanent-collection/results',
       name: 'permanent-collection-results',
       component: () => import('./views/PcList.vue'),
-      meta: { entities: ['items', 'countries', 'dynasties', 'partners'] },
+      meta: meta('permanent-collection', ['items', 'countries', 'dynasties', 'partners']),
     },
     {
       path: '/database',
       name: 'database',
       component: () => import('./views/Database.vue'),
-      meta: { entities: [] },
+      meta: meta('database', []),
     },
     {
       path: '/database/results',
       name: 'database-results',
       component: () => import('./views/DatabaseResults.vue'),
-      meta: { entities: ['items', 'countries', 'dynasties', 'partners'] },
+      meta: meta('database', ['items', 'countries', 'dynasties', 'partners']),
     },
     {
       path: '/timeline',
       name: 'timeline',
       component: () => import('./views/TimelineEntrance.vue'),
-      meta: { entities: ['timelines', 'timeline_events', 'countries'] },
+      meta: meta('timeline', ['timelines', 'timeline_events', 'countries']),
     },
     {
       path: '/timeline/results',
       name: 'timeline-results',
       component: () => import('./views/TimelineResults.vue'),
-      meta: { entities: ['timelines', 'timeline_events', 'countries'] },
+      meta: meta('timeline', ['timelines', 'timeline_events', 'countries']),
     },
     {
       path: '/partners',
       name: 'partners',
       component: () => import('./views/PartnersEntrance.vue'),
-      meta: { entities: ['items', 'partners', 'countries'] },
+      meta: meta('partners', ['items', 'partners', 'countries']),
     },
     {
       path: '/partners/results',
       name: 'partners-results',
       component: () => import('./views/PartnersResults.vue'),
-      meta: { entities: ['partners', 'countries'] },
+      meta: meta('partners', ['partners', 'countries']),
     },
     {
       path: '/partner/:id',
       name: 'partner',
       component: () => import('./views/PartnerDetail.vue'),
-      meta: { entities: ['partners', 'items', 'countries'] },
+      meta: meta('partners', ['partners', 'items', 'countries']),
     },
     {
       path: '/dynasties',
       name: 'dynasties',
       component: () => import('./views/Dynasties.vue'),
-      meta: { entities: ['dynasties', 'items'] },
+      meta: meta('dynasties', ['dynasties', 'items']),
     },
     {
       path: '/dynasty/:id',
       name: 'dynasty',
       component: () => import('./views/DynastyDetail.vue'),
-      meta: { entities: ['dynasties', 'items', 'collections'] },
+      meta: meta('dynasties', ['dynasties', 'items', 'collections']),
     },
     {
       path: '/artistic-introduction',
       name: 'artistic-introduction',
       component: () => import('./views/ArtIntroEntrance.vue'),
-      meta: { entities: ['collections'] },
+      meta: meta('artistic-introduction', ['collections']),
     },
     {
       path: '/artistic-introduction/:themeId',
       name: 'artistic-introduction-theme',
       component: () => import('./views/ArtIntroTheme.vue'),
-      meta: { entities: ['collections', 'items', 'partners', 'dynasties'] },
+      meta: meta('artistic-introduction', ['collections', 'items', 'partners', 'dynasties']),
     },
     {
       path: '/exhibitions',
       name: 'exhibitions',
       component: () => import('./views/ExhibitionsEntrance.vue'),
-      meta: { entities: ['collections'] },
+      meta: meta('exhibitions', ['collections']),
     },
     {
       path: '/exhibitions/:exhibitionId',
       name: 'exhibition',
       component: () => import('./views/ExhibitionSplash.vue'),
-      meta: { entities: ['collections'] },
+      meta: meta('exhibitions', ['collections']),
     },
     {
       path: '/exhibitions/:exhibitionId/introduction',
       name: 'exhibition-introduction',
       component: () => import('./views/ExhibitionIntroduction.vue'),
-      meta: { entities: ['collections', 'items', 'partners', 'dynasties'] },
+      meta: meta('exhibitions', ['collections', 'items', 'partners', 'dynasties']),
     },
     {
       path: '/exhibitions/:exhibitionId/theme/:themeId',
       name: 'exhibition-theme',
       component: () => import('./views/ExhibitionTheme.vue'),
-      meta: { entities: ['collections', 'items', 'partners', 'dynasties'] },
+      meta: meta('exhibitions', ['collections', 'items', 'partners', 'dynasties']),
     },
     {
+      // The item sheet is reached from both the curated Permanent Collection
+      // and the free-text Database search, but it renders the same record
+      // either way: it belongs to 'database', the section that owns the
+      // general-purpose search this page is a result of (as in carpets).
       path: '/item/:id',
       name: 'item',
       component: () => import('./views/ItemDetail.vue'),
-      meta: { entities: ['items', 'dynasties', 'collections', 'partners', 'countries'] },
+      meta: meta('database', ['items', 'dynasties', 'collections', 'partners', 'countries']),
     },
   ],
 
