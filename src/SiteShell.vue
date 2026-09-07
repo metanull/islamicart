@@ -23,7 +23,6 @@ const navLinks = computed(() => [
   { label: t('islamicart.nav.database'), href: '#/database', active: section.value === 'database' },
   { label: t('islamicart.nav.timeline'), href: '#/timeline', active: section.value === 'timeline' },
   { label: t('islamicart.nav.partners'), href: '#/partners', active: section.value === 'partners' },
-  { label: t('islamicart.nav.dynasties'), href: '#/dynasties', active: section.value === 'dynasties' },
   { label: t('islamicart.nav.artisticIntroduction'), href: '#/artistic-introduction', active: section.value === 'artistic-introduction' },
   { label: t('islamicart.nav.exhibitions'), href: '#/exhibitions', active: section.value === 'exhibitions' },
 ])

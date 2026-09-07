@@ -17,7 +17,6 @@ const cards = computed(() => [
   { title: t('islamicart.nav.database'), description: t('islamicart.home.databaseText'), action: t('core.action.search'), to: { name: 'database' } },
   { title: t('islamicart.nav.timeline'), description: t('islamicart.home.timelineText'), action: t('core.action.explore'), to: { name: 'timeline' } },
   { title: t('islamicart.nav.partners'), description: t('islamicart.home.partnersText'), action: t('core.action.browse'), to: { name: 'partners' } },
-  { title: t('islamicart.dynasty.heading'), description: t('islamicart.home.dynastiesText'), action: t('core.action.explore'), to: { name: 'dynasties' } },
   { title: t('islamicart.nav.artisticIntroduction'), description: t('islamicart.home.artisticIntroductionText'), action: t('core.action.explore'), to: { name: 'artistic-introduction' } },
   { title: t('islamicart.nav.exhibitions'), description: t('islamicart.home.exhibitionsText'), action: t('core.action.explore'), to: { name: 'exhibitions' } },
 ])

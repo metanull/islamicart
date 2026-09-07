@@ -215,7 +215,7 @@ describe('website smoke test', () => {
   }, 20000)
   // The item sheet runs on the platform's composed record view
   // (metanull/viewer-core#50): the rows come from the sheet spec, and what
-  // only this website has — the dynasty cards, the Artistic Introduction
+  // only this website has — the dynasty popout, the Artistic Introduction
   // links, the type badge — fills the view's slots. A monument and an object
   // read different field orders (composables/sheet.js), so both are mounted.
   it('renders an object sheet on the composed record view', async () => {
@@ -226,6 +226,20 @@ describe('website smoke test', () => {
     expect(host.querySelector('.mwnf-record')).not.toBeNull()
     expect(host.querySelector('.detail-type-badge').textContent.trim()).toBe('object')
     expect(host.querySelector('.detail-title').textContent.trim()).not.toBe('')
+    app.unmount()
+  }, 60000)
+
+  // Decision D5: the standalone dynasties list/sheet legacy never had are
+  // gone; what legacy did have — dynasty.php's popup off an item sheet — is
+  // viewer-layout's `DynastyPopout`, reached through the item sheet's
+  // `after-sheet` slot (ItemDetail.vue).
+  it('shows the dynasty popout on a record that carries one', async () => {
+    const [items] = await loadEntities(['items'])
+    const item = items.find((i) => i.id === '8750b2ef-ed27-560f-a5b8-9740d8ab180c')
+    const { app, host } = await mountSite(`#/item/${encodeURIComponent(item.id)}`)
+    await vi.waitFor(() => expect(host.querySelector('.mwnf-dynasty')).not.toBeNull(), { timeout: 20000 })
+    expect(host.textContent).toContain('Dynasties')
+    expect(host.textContent).toContain('Mughal')
     app.unmount()
   }, 60000)
 
@@ -491,12 +505,17 @@ describe('website smoke test', () => {
     const names = config.extraViews.map((r) => r.name)
     for (const name of [
       'home', 'permanent-collection', 'permanent-collection-results', 'database', 'database-results',
-      'timeline', 'timeline-results', 'timeline-gallery', 'partners', 'partners-results', 'partner', 'dynasties',
-      'dynasty', 'artistic-introduction', 'artistic-introduction-theme', 'exhibitions', 'exhibition',
+      'timeline', 'timeline-results', 'timeline-gallery', 'partners', 'partners-results', 'partner',
+      'artistic-introduction', 'artistic-introduction-theme', 'exhibitions', 'exhibition',
       'exhibition-introduction', 'exhibition-theme', 'item',
     ]) {
       expect(names).toContain(name)
     }
+    // Decision D5: the dynasties list/sheet were an addition over legacy
+    // (which only ever popped dynasties up from an item sheet); the item
+    // sheet's own popout (metanull/islamicart#50) is their only trace now.
+    expect(names).not.toContain('dynasties')
+    expect(names).not.toContain('dynasty')
     expect(config.extraViews.every((r) => r.name)).toBe(true)
     expect(config.extraViews.some((r) => r.path.includes('pathMatch'))).toBe(false)
     // This website has never been published under another URL shape.
