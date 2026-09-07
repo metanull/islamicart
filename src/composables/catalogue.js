@@ -4,13 +4,16 @@ import { useInventoryData } from './useInventoryData.js'
 
 // The catalogue spec: what this website's lists filter and search on. The
 // engine — query state, options, dates, pages, the keyword grammar — is
-// viewer-core's; what is declared here is only what is this website's: the
-// scope rule, the date rule, the nine fields of the legacy search form, and
-// the three facets of the Permanent Collection. Two entrances and two
-// results pages read this one declaration.
+// viewer-core's and viewer-layout's; what is declared here is only what is
+// this website's: the scope rule, the date rule, the nine fields of the
+// legacy search form, the three facets of the Permanent Collection, and the
+// `permanentCollection` spec that composes them for viewer-layout's
+// `CatalogueResultsView`. Two entrances and two results pages read this one
+// declaration.
 
 const {
-  countries, dynasties, dynastyLabel, countryLabel, partnerLabel, partners, itemProjectKey,
+  countries, dynasties, dynastyLabel, countryLabel, itemLabel, itemProjectKey, mdInline,
+  partnerLabel, partners, tr,
 } = useInventoryData()
 
 /** Twenty rows a page, as the legacy pages showed. */
@@ -94,5 +97,73 @@ export const FACETS = {
     field: 'partner_id',
     label: partnerLabel,
     include: (id) => (partners.value ?? []).some((p) => p.id === id),
+  },
+}
+
+// ── The Permanent Collection, as a spec ─────────────────────────────────────
+//
+// What viewer-layout's `CatalogueResultsView` renders on
+// `/permanent-collection/results`: the three facets above over every record,
+// as legacy offered them, the scope rule, the two years, the Explore
+// checkbox, the date rule above, chronological order, twenty rows a page,
+// and legacy's count phrased as "[N objects, M monuments]". Every text is an
+// entry name; the check that every name resolves reads them here.
+
+export const permanentCollection = {
+  entity: 'items',
+  keys: ['country', 'dynasty', 'partner', 'begin', 'end', 'epm'],
+  facets: FACETS,
+  facetScope: 'all',
+  scope: (item, filters) => inScope(item, filters.epm === '1'),
+  controls: [
+    { key: 'country', label: 'catalogue.facet.country', anyLabel: 'catalogue.facet.any' },
+    { key: 'dynasty', label: 'catalogue.facet.periodDynasty', anyLabel: 'catalogue.facet.any' },
+    { key: 'partner', label: 'catalogue.facet.holdingInstitution', anyLabel: 'catalogue.facet.any' },
+    { key: 'begin', type: 'year', label: 'catalogue.facet.fromYear', placeholder: 'islamicart.filter.fromYearHint' },
+    { key: 'end', type: 'year', label: 'catalogue.facet.toYear', placeholder: 'islamicart.filter.toYearHint' },
+    { key: 'epm', type: 'checkbox', label: 'islamicart.filter.includeEpm' },
+  ],
+  filterMode: 'apply',
+  filterTitle: 'catalogue.filter.heading',
+  dates: { mode: DATE_MODE },
+  sort: 'chronological',
+  pageSize: PAGE_SIZE,
+  variant: 'list',
+  recordRoute: 'item',
+  empty: 'catalogue.results.noResultsFilter',
+  pagination: { window: 7 },
+
+  // The row: the thumbnail, the name, the country, the date, the dynasties
+  // and the holder, the holder only when the package carries the partner,
+  // so a label is never an id.
+  record: (item) => {
+    const text = tr('items', item.id)
+    return {
+      id: item.id,
+      image: item.images?.[0]?.url ?? '',
+      imageAlt: itemLabel(item),
+      name: mdInline(text.name ?? item.internal_name ?? item.id),
+      meta: [
+        countryLabel(item.country_id),
+        text.dates,
+        (item.dynasty_ids ?? []).map(dynastyLabel).join(', '),
+        (partners.value ?? []).some((p) => p.id === item.partner_id) ? partnerLabel(item.partner_id) : '',
+      ].filter(Boolean),
+      badge: item.type,
+      to: { name: 'item', params: { id: item.id } },
+    }
+  },
+
+  summary: ({ matching, t }) => {
+    let objects = 0
+    let monuments = 0
+    for (const item of matching) {
+      if (item.type === 'monument') monuments++
+      else objects++
+    }
+    return [
+      { label: t('catalogue.results.objectsFound'), count: objects },
+      { label: t('catalogue.results.monumentsFound'), count: monuments },
+    ]
   },
 }
