@@ -133,6 +133,86 @@ describe('website smoke test', () => {
     app.unmount()
   }, 60000)
 
+  // The search entrance moved onto viewer-layout's composed `SearchFormView`
+  // (metanull/islamicart#49, `mode: 'rows'`): the three keyword rows, the
+  // century date selects and the search-language select come from the spec
+  // in composables/search.js; the Explore checkbox is the site's own
+  // `extras` entry.
+  it('renders the Database entrance on the composed search form', async () => {
+    const { app, host } = await mountSite('#/database')
+    await vi.waitFor(() => expect(host.querySelector('.mwnf-search-form__row')).not.toBeNull(), { timeout: 20000 })
+    expect(host.querySelectorAll('.mwnf-search-form__row').length).toBe(3)
+    expect(host.textContent).toContain('Keyword 1')
+    expect(host.textContent).toContain('Search language')
+    expect(host.querySelector('.mwnf-facet--checkbox input[type="checkbox"]')).not.toBeNull()
+    app.unmount()
+  }, 20000)
+
+  // The database results moved onto the composed `CatalogueResultsView`
+  // (metanull/islamicart#49): the field grammar, ranking and expansions run
+  // through `useKeywordIndex` in composables/search.js. Decision D3's
+  // country expansion (legacy's `getKeywordCountry`) is exercised directly:
+  // this Jordanian cross's own name/description/tags never say "Jordan" (the
+  // fixture was picked for that), so it is found only because the keyword
+  // field's haystack carries the raw country id and the expansion turns the
+  // typed country name into it.
+  it('finds an item through the country-name expansion, not a literal text match', async () => {
+    const [items] = await loadEntities(['items'])
+    const cross = items.find((i) => i.id === '55ec1f26-ba55-52bc-a1b6-556c48ff41e4')
+    expect(cross.country_id).toBe('jor')
+
+    const { app, host } = await mountSite('#/database/results?q=Jordan&field=keyword')
+    await vi.waitFor(() => expect(host.querySelector('.mwnf-list__row')).not.toBeNull(), { timeout: 20000 })
+    expect(host.textContent).toContain('A bronze Greek cross')
+    // The recap line spells out what was searched — never just a count.
+    expect(host.textContent).toContain('Keyword(s): "Jordan"')
+    app.unmount()
+  }, 30000)
+
+  // The Explore checkbox widens the database search the same way it widens
+  // the Permanent Collection (composables/catalogue.js's `inScope`, shared
+  // by both specs).
+  it('widens the database search when Explore is set in the URL', async () => {
+    const { app: withoutEpm, host: hostWithoutEpm } = await mountSite('#/database/results')
+    await vi.waitFor(() => expect(hostWithoutEpm.querySelector('.mwnf-list__row')).not.toBeNull(), { timeout: 20000 })
+    const totalWithoutEpm = summaryTotal(hostWithoutEpm)
+    withoutEpm.unmount()
+
+    const { app: withEpm, host: hostWithEpm } = await mountSite('#/database/results?epm=1')
+    await vi.waitFor(() => expect(hostWithEpm.querySelector('.mwnf-list__row')).not.toBeNull(), { timeout: 20000 })
+    const totalWithEpm = summaryTotal(hostWithEpm)
+    withEpm.unmount()
+
+    expect(totalWithEpm).not.toBe(totalWithoutEpm)
+  }, 60000)
+
+  // The refine row (composables/search.js's `q4`/`field4`/`op4`) narrows an
+  // existing search further, the same way legacy's "Refine" panel added a
+  // fourth keyword to the three already submitted.
+  it('narrows a search with the refine row', async () => {
+    const { app: broad, host: broadHost } = await mountSite('#/database/results?q=Jordan&field=keyword')
+    await vi.waitFor(() => expect(broadHost.querySelector('.mwnf-list__row')).not.toBeNull(), { timeout: 20000 })
+    const broadTotal = summaryTotal(broadHost)
+    broad.unmount()
+
+    const { app, host } = await mountSite('#/database/results?q=Jordan&field=keyword&q4=cross&field4=keyword&op4=AND')
+    await vi.waitFor(() => expect(host.querySelector('.mwnf-list__row')).not.toBeNull(), { timeout: 20000 })
+    expect(summaryTotal(host)).toBeLessThan(broadTotal)
+    expect(host.textContent).toContain('A bronze Greek cross')
+    app.unmount()
+  }, 30000)
+
+  // The Permanent Collection entrance moved onto the composed
+  // `SearchFormView` (`mode: 'radio'`); its facet options are the values the
+  // records actually carry (composables/catalogue.js's `FACETS`), the same
+  // derivation the results page's own filter panel uses.
+  it('renders the Permanent Collection entrance on the composed radio search form', async () => {
+    const { app, host } = await mountSite('#/permanent-collection')
+    await vi.waitFor(() => expect(host.querySelector('.mwnf-search-form__radio-row')).not.toBeNull(), { timeout: 20000 })
+    expect(host.querySelectorAll('.mwnf-search-form__radio-row').length).toBe(5)
+    expect(host.textContent).toContain('Holding institution')
+    app.unmount()
+  }, 20000)
   // The item sheet runs on the platform's composed record view
   // (metanull/viewer-core#50): the rows come from the sheet spec, and what
   // only this website has — the dynasty cards, the Artistic Introduction
