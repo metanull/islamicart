@@ -41,6 +41,46 @@ describe('website smoke test', () => {
     // re-run it rather than read it.
   }, 20000)
 
+  // The Permanent Collection list runs on the platform's composed results
+  // view (metanull/viewer-core#50, metanull/viewer-layout#33): the rows, the
+  // filter panel and the Explore checkbox come from the catalogue spec, and
+  // what only this website has — the heading suffix — fills the view's slot.
+  it('renders the Permanent Collection on the composed results view', async () => {
+    const { app, host } = await mountSite('#/permanent-collection/results')
+    await vi.waitFor(() => expect(host.querySelector('.mwnf-list__row')).not.toBeNull(), { timeout: 20000 })
+    expect(host.querySelector('.mwnf-catalogue')).not.toBeNull()
+    expect(host.querySelector('.mwnf-filter')).not.toBeNull()
+    expect(host.querySelector('.mwnf-facet--checkbox input[type="checkbox"]')).not.toBeNull()
+    expect(host.querySelector('.section-heading').textContent).toContain('Permanent Collection')
+    // Legacy's count, in its two halves: objects and monuments.
+    expect(host.querySelectorAll('.mwnf-summary__count').length).toBe(2)
+    app.unmount()
+  }, 60000)
+
+  // The Explore checkbox writes the same URL key legacy's opt-in checkbox
+  // did (`epm`), so the entrance's link keeps working: checking it must
+  // widen the results beyond the always-searched 'ISL' project. The row
+  // count alone would not show this — a page holds twenty rows regardless —
+  // so this reads the summary's total instead.
+  function summaryTotal(host) {
+    return [...host.querySelectorAll('.mwnf-summary__count')]
+      .reduce((sum, el) => sum + Number(el.textContent), 0)
+  }
+
+  it('widens the Permanent Collection when Explore is set in the URL', async () => {
+    const { app: withoutEpm, host: hostWithoutEpm } = await mountSite('#/permanent-collection/results')
+    await vi.waitFor(() => expect(hostWithoutEpm.querySelector('.mwnf-list__row')).not.toBeNull(), { timeout: 20000 })
+    const totalWithoutEpm = summaryTotal(hostWithoutEpm)
+    withoutEpm.unmount()
+
+    const { app: withEpm, host: hostWithEpm } = await mountSite('#/permanent-collection/results?epm=1')
+    await vi.waitFor(() => expect(hostWithEpm.querySelector('.mwnf-list__row')).not.toBeNull(), { timeout: 20000 })
+    const totalWithEpm = summaryTotal(hostWithEpm)
+    withEpm.unmount()
+
+    expect(totalWithEpm).not.toBe(totalWithoutEpm)
+  }, 60000)
+
   // The item sheet runs on the platform's composed record view
   // (metanull/viewer-core#50): the rows come from the sheet spec, and what
   // only this website has — the dynasty cards, the Artistic Introduction
