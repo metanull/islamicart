@@ -45,12 +45,6 @@ function browse(type, project) {
               <button class="btn" @click="browse('museum', 'EPM')">{{ $t('islamicart.action.browseMuseums') }} →</button>
             </td>
           </tr>
-          <tr>
-            <th><label>{{ $t('islamicart.partner.others') }}</label></th>
-            <td>
-              <button class="btn" @click="browse('institution', 'EPM')">{{ $t('islamicart.action.browseInstitutions') }} →</button>
-            </td>
-          </tr>
         </tbody>
       </table>
     </div>

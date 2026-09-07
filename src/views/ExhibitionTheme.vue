@@ -55,13 +55,20 @@ watch(activeLang, lang => {
 }, { immediate: true })
 
 function collectionText(collectionId) {
+  // Fall back to the English record when the active language has none. The
+  // offered languages come from the item translations, and the package's
+  // per-entity coverage does not line up with them: two of the languages a
+  // visitor can pick ship no collections file at all. Without this the whole
+  // exhibition — titles and prose — renders blank for them.
   return tr('collections', collectionId, activeLang.value)
+    ?? tr('collections', collectionId)
+    ?? {}
 }
 
 // The importer synthesizes a placeholder title ("Theme 5", "Page 17") when
 // the legacy source has no page_title/theme_title for a given language.
 // Treat that pattern as "missing" and fall back to the English title.
-const PLACEHOLDER_TITLE = /^(Artintro )?(Theme|Page) \d+$/
+const PLACEHOLDER_TITLE = /^(Theme|Page) \d+$/
 
 function resolveTitle(collectionId, fallbackName) {
   const local = collectionText(collectionId).title
@@ -125,7 +132,7 @@ const selectedDisplay = computed(() => {
   const variant = variantIdx > 0 ? selectedVariants.value[variantIdx - 1] : null
 
   if (variant) {
-    const caption = variant.caption?.[activeLang.value] ?? {}
+    const caption = variant.caption?.[activeLang.value] ?? variant.caption?.en ?? {}
     return {
       name: caption.detail_name ?? caption.name ?? '',
       date: caption.date ?? '',
@@ -139,7 +146,7 @@ const selectedDisplay = computed(() => {
 
   // Main/default view: caption override (current language) merged with the
   // item's own generic translation, mirroring the legacy behaviour.
-  const caption = sel.entry.caption?.[activeLang.value] ?? {}
+  const caption = sel.entry.caption?.[activeLang.value] ?? sel.entry.caption?.en ?? {}
   const t = tr('items', sel.item.id, activeLang.value) ?? {}
   return {
     name: caption.name ?? t.name ?? sel.item.internal_name ?? sel.item.id,
