@@ -114,6 +114,64 @@ describe('website smoke test', () => {
     app.unmount()
   }, 60000)
 
+  // The partner list moved onto viewer-layout's composed `PartnerListView`
+  // (metanull/islamicart#48): the country grouping and the associated tier
+  // come from the spec in composables/partner.js. Jordan is picked because
+  // the data package nests an associated museum ('Ajlun Castle Museum)
+  // under a main one (Jordan Archaeological Museum) there (G.1's
+  // `level`/`parent_id`), so the nesting is visible rather than merely
+  // configured.
+  it('renders the partner list grouped by country, nesting an associated partner under its own parent', async () => {
+    const { app, host } = await mountSite('#/partners/results?type=museum&project=ISL')
+    await vi.waitFor(() => expect(host.querySelector('.mwnf-partner-list__row')).not.toBeNull(), { timeout: 20000 })
+
+    expect(host.querySelector('.section-heading').textContent).toContain('Partner Museums')
+
+    const jordanGroup = [...host.querySelectorAll('.mwnf-partner-list__group')].find((el) =>
+      el.querySelector('.mwnf-partner-list__group-title')?.textContent.includes('Jordan')
+    )
+    expect(jordanGroup).not.toBeUndefined()
+    expect(jordanGroup.textContent).toContain('Jordan Archaeological Museum')
+
+    const nested = jordanGroup.querySelector('.mwnf-partner-list__children')
+    expect(nested).not.toBeNull()
+    expect(nested.textContent).toContain('Ajlun Castle Museum')
+
+    app.unmount()
+  }, 60000)
+
+  // The partner profile moved onto the composed `RecordView`
+  // (metanull/islamicart#48): the description/contact/logo/map sections and
+  // the held items list fill its slots. 'Ajlun Castle Museum is picked
+  // because the package carries an image, a logo, coordinates, contact
+  // details and two held items for it, exercising every slot at once.
+  it('renders a partner profile with its contact details, logo, map and held items', async () => {
+    const [partners] = await loadEntities(['partners'])
+    const museum = partners.find((p) => p.id === 'c9284900-9055-5081-9abe-863fad506cdc')
+    const { app, host } = await mountSite(`#/partner/${encodeURIComponent(museum.id)}`)
+    await vi.waitFor(() => expect(host.querySelector('.mwnf-record')).not.toBeNull(), { timeout: 20000 })
+
+    expect(host.querySelector('.detail-title').textContent).toContain('Ajlun Castle Museum')
+    // The badge is the entry name `partner.info.typeMuseum`/`typeInstitution`
+    // resolves to, not the record's own `type` value.
+    expect(host.querySelector('.detail-type-badge').textContent.trim()).toBe('Museum')
+
+    // The action's own count is the package's `item_count`, never a scan of
+    // every item in it.
+    const viewItems = host.querySelector('.view-items-row a')
+    expect(viewItems.textContent).toContain(`(${museum.item_count})`)
+
+    expect(host.textContent).toContain('Contact')
+    expect(host.textContent).toContain('Logo')
+    expect(host.querySelector('.logo-img')).not.toBeNull()
+    expect(host.querySelector('.mwnf-partner-map')).not.toBeNull()
+
+    expect(host.textContent).toContain('Related items')
+    expect(host.querySelectorAll('.mwnf-list__row').length).toBe(museum.item_count)
+
+    app.unmount()
+  }, 60000)
+
   // The Exhibitions entrance, splash, introduction and theme pages moved
   // onto viewer-layout's composed views (metanull/islamicart#45) over
   // `useCollectionTree`: `SectionCards` for the entrance and the splash's
