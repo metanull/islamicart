@@ -90,8 +90,16 @@ export default {
     {
       path: '/timeline/results',
       name: 'timeline-results',
+      // 'items' feeds the "See gallery" cross-link's own count
+      // (composables/timeline.js), not the events themselves.
       component: () => import('./views/TimelineResults.vue'),
-      meta: meta('timeline', 'timelines', 'timeline_events', 'countries'),
+      meta: meta('timeline', 'timelines', 'timeline_events', 'countries', 'items'),
+    },
+    {
+      path: '/timeline/gallery',
+      name: 'timeline-gallery',
+      component: () => import('./views/TimelineGallery.vue'),
+      meta: meta('timeline', 'items', 'countries', 'dynasties', 'partners'),
     },
     {
       path: '/partners',
