@@ -1,4 +1,3 @@
-import { unref } from 'vue'
 import { dateRange, effectiveYearTo, eventDateLabel } from '@metanull/viewer-core'
 import { useInventoryData } from './useInventoryData.js'
 import { DATE_MODE, PAGE_SIZE, inScope, itemRecord, objectsAndMonumentsSummary } from './catalogue.js'
@@ -47,11 +46,7 @@ function itemsFromEvent(event) {
   return { name: 'permanent-collection-results', query: periodQuery(event.country_id, event.year_from, end) }
 }
 
-function eventRow(event, rawCtx) {
-  // viewer-layout 2.9.0 hands the row builder its own internal computed ref
-  // instead of the ref's value (a package defect); `unref` reads through it
-  // either way, so this keeps working once that is fixed upstream too.
-  const ctx = unref(rawCtx)
+function eventRow(event, ctx) {
   return {
     id: event.id,
     date: eventDateLabel(event, event.text, ctx.t),
