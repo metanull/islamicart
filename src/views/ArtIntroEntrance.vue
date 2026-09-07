@@ -1,27 +1,40 @@
 <script setup>
 import { computed } from 'vue'
+import { TextPageView } from '@metanull/viewer-layout/views'
+import { SectionCards } from '@metanull/viewer-layout/content'
+import { artIntroRoot, artIntroTree } from '../composables/artIntro.js'
 import { useInventoryData } from '../composables/useInventoryData.js'
 
-const {
-  artIntroRoot,
-  artIntroThemes,
-  md,
-  mdInline,
-  tr,
-} = useInventoryData()
+// The Artistic Introduction entrance: the section root's own subtitle/
+// description/credits (per-record catalogue text on the marker's single
+// child — composables/artIntro.js), plus a card per theme. The
+// description goes through `TextPageView`'s `body(ctx)` (the dotted-path/
+// context-function form, metanull/viewer-layout#49); the subtitle and
+// credits have no home in `TextPageView`'s own contract (heading is an
+// entry name only, and it carries no slots), so this view renders them
+// itself, around it, same as the site's other entrance pages render their
+// own `section-heading`.
+const { mdInline, mdStrip, tr } = useInventoryData()
 
 const rootText = computed(() => {
   const root = artIntroRoot.value
-  if (!root) return {}
-  return tr('collections', root.id) ?? {}
+  return root ? (tr('collections', root.id) ?? {}) : {}
 })
 
-const themeList = computed(() =>
-  artIntroThemes.value.map(theme => ({
-    ...theme,
-    title: tr('collections', theme.id)?.title ?? theme.internal_name,
+const spec = computed(() => ({
+  heading: false,
+  body: (ctx) => (artIntroRoot.value ? (ctx.tr('collections', artIntroRoot.value.id)?.description ?? '') : ''),
+  back: false,
+}))
+
+const themeCards = computed(() => {
+  const root = artIntroRoot.value
+  if (!root) return []
+  return artIntroTree.children(root.id).map((theme) => ({
+    title: mdStrip(tr('collections', theme.id)?.title ?? theme.internal_name),
+    to: { name: 'artistic-introduction-theme', params: { themeId: theme.id } },
   }))
-)
+})
 </script>
 
 <template>
@@ -34,23 +47,13 @@ const themeList = computed(() =>
 
     <div class="content-box intro-box">
       <h2 v-if="rootText.extra?.subtitle" class="intro-subtitle" v-html="mdInline(rootText.extra.subtitle)" />
-      <div v-if="rootText.description" class="prose" v-html="md(rootText.description)" />
+      <TextPageView :spec="spec" />
       <p v-if="rootText.extra?.credits" class="intro-credits" v-html="mdInline(rootText.extra.credits)" />
     </div>
 
     <div class="content-box">
       <p class="intro-text">{{ $t('islamicart.artIntro.selectTheme') }}</p>
-      <ul class="theme-list">
-        <li
-          v-for="theme in themeList"
-          :key="theme.id"
-          class="theme-row"
-          @click="$router.push(`/artistic-introduction/${encodeURIComponent(theme.id)}`)"
-        >
-          <span class="theme-name" v-html="mdInline(theme.title)" />
-          <span class="theme-arrow">→</span>
-        </li>
-      </ul>
+      <SectionCards :cards="themeCards" variant="rows" />
     </div>
   </div>
 </template>
@@ -66,9 +69,9 @@ const themeList = computed(() =>
   margin-bottom: 12px;
   font-family: 'Roboto', sans-serif;
 }
-.prose { font-size: 14px; line-height: 1.7; color: var(--text); font-family: 'Roboto', sans-serif; }
-.prose :deep(p) { margin: 0 0 .75em; }
-.prose :deep(p:last-child) { margin-bottom: 0; }
+.intro-box :deep(.mwnf-prose) { font-size: 14px; line-height: 1.7; color: var(--text); font-family: 'Roboto', sans-serif; }
+.intro-box :deep(.mwnf-prose p) { margin: 0 0 .75em; }
+.intro-box :deep(.mwnf-prose p:last-child) { margin-bottom: 0; }
 
 .intro-credits {
   margin-top: 14px;
@@ -86,28 +89,5 @@ const themeList = computed(() =>
   color: var(--muted);
   margin-bottom: 16px;
   font-family: 'Roboto', sans-serif;
-}
-
-.theme-list { list-style: none; }
-.theme-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 4px;
-  border-bottom: 1px solid #e8dcc8;
-  cursor: pointer;
-}
-.theme-row:last-child { border-bottom: none; }
-.theme-row:hover .theme-name { color: var(--nav-active); }
-
-.theme-name {
-  font-size: 15px;
-  font-weight: 500;
-  color: var(--heading);
-  font-family: 'Roboto', sans-serif;
-}
-.theme-arrow {
-  color: var(--muted);
-  font-size: 14px;
 }
 </style>

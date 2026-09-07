@@ -3,17 +3,16 @@ import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from '@metanull/viewer-core'
 import { RecordList } from '@metanull/viewer-layout/content'
+import { artIntroTree } from '../composables/artIntro.js'
+import { exhibitionsTree } from '../composables/exhibitions.js'
 import { useInventoryData } from '../composables/useInventoryData.js'
 
 const route = useRoute()
 const router = useRouter()
 const {
-  artIntroThemes,
   availableLanguages,
   defaultLang,
   dynasties,
-  exhibitions,
-  exhibitionThemes,
   items,
   loadTranslations,
   md,
@@ -84,14 +83,13 @@ function closeGlossaryModal() {
 
 // ── Artistic Introduction & Exhibitions cross-links ─────────────────────
 //
-// Both features now exist natively in this viewer — compute overlap
-// client-side from already-exported collections.json + items.json (an
-// item belongs to a collection when it appears in that collection's own
-// `items[]` array).
-
-function collectionHasAnyItem(collection, idSet) {
-  return (collection.items ?? []).some(entry => idSet.has(entry.id))
-}
+// Both trees' own reverse lookup (`containing`, viewer-core's
+// `useCollectionTree`) gives every collection directly carrying a related
+// item; walking one hop up from there reaches the enclosing theme (items
+// sit on a theme's page, never the theme itself) or, for Exhibitions,
+// walking up to the exhibitions-root marker's own child reaches the
+// enclosing exhibition, whether the item is attached to the exhibition
+// itself (an introduction item) or to one of its themes' pages.
 
 function collectionLabel(collection) {
   return tr('collections', collection.id)?.title ?? collection.internal_name ?? collection.id
@@ -102,20 +100,31 @@ const relatedItemIds = computed(() => new Set(relatedItems.value.map(i => i.id))
 const relatedArtIntroThemes = computed(() => {
   const ids = relatedItemIds.value
   if (!ids.size) return []
-  return artIntroThemes.value
-    .filter(theme => theme.pages.some(page => collectionHasAnyItem(page, ids)))
-    .map(theme => ({ id: theme.id, label: collectionLabel(theme) }))
+  const themes = new Map()
+  for (const itemId of ids) {
+    for (const page of artIntroTree.containing(itemId)) {
+      const theme = artIntroTree.byId.value.get(page.parent_id)
+      if (theme && !themes.has(theme.id)) themes.set(theme.id, theme)
+    }
+  }
+  return [...themes.values()].map(theme => ({ id: theme.id, label: collectionLabel(theme) }))
 })
 
 const relatedExhibitions = computed(() => {
   const ids = relatedItemIds.value
   if (!ids.size) return []
-  return exhibitions.value
-    .filter(exh =>
-      collectionHasAnyItem(exh, ids) ||
-      exhibitionThemes(exh.id).some(theme => theme.pages.some(page => collectionHasAnyItem(page, ids)))
-    )
-    .map(exh => ({ id: exh.id, label: collectionLabel(exh) }))
+  const markerId = exhibitionsTree.root.value?.id
+  const exhibitions = new Map()
+  for (const itemId of ids) {
+    for (const node of exhibitionsTree.containing(itemId)) {
+      let current = node
+      while (current && current.parent_id !== markerId) {
+        current = exhibitionsTree.byId.value.get(current.parent_id)
+      }
+      if (current && !exhibitions.has(current.id)) exhibitions.set(current.id, current)
+    }
+  }
+  return [...exhibitions.values()].map(exh => ({ id: exh.id, label: collectionLabel(exh) }))
 })
 
 // ── Key facts ──────────────────────────────────────────────────────────

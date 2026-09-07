@@ -188,6 +188,51 @@ describe('website smoke test', () => {
     app.unmount()
   }, 30000)
 
+  // The Artistic Introduction entrance and theme pages moved onto
+  // viewer-layout's composed views (islamicart#46), the same way Exhibitions
+  // did: `TextPageView` (its `body(ctx)`, metanull/viewer-layout#49) for the
+  // entrance's own text plus `SectionCards` for the theme list, `EssayView`
+  // for a theme's pages — `tabs: true`, `navigation: 'siblings'` (legacy
+  // never walked from one theme into the next here, unlike Exhibitions).
+  function findArtIntroThemeWithPages() {
+    for (const theme of collectionsFixture.filter((c) => c.parent_id === artIntroRootFixture.id)) {
+      const pages = collectionsFixture.filter((c) => c.parent_id === theme.id)
+      if (pages.length > 1) return theme
+    }
+    return null
+  }
+
+  let artIntroRootFixture
+
+  it('renders the Artistic Introduction entrance on TextPageView and SectionCards', async () => {
+    const marker = collectionsFixture.find((c) => c.purpose === 'artistic-introduction-root')
+    expect(marker).toBeTruthy()
+    artIntroRootFixture = collectionsFixture.find((c) => c.parent_id === marker.id)
+    expect(artIntroRootFixture).toBeTruthy()
+
+    const { app, host } = await mountSite('#/artistic-introduction')
+    await vi.waitFor(() => expect(host.querySelector('.mwnf-text-page')).not.toBeNull(), { timeout: 20000 })
+    expect(host.querySelector('.section-heading').textContent).toContain('Artistic Introduction')
+    expect(host.querySelector('.mwnf-cards')).not.toBeNull()
+    app.unmount()
+  }, 30000)
+
+  it('renders an Artistic Introduction theme on the composed essay view, with its tab strip and panel', async () => {
+    const theme = findArtIntroThemeWithPages()
+    expect(theme).toBeTruthy()
+
+    const { app, host } = await mountSite(`#/artistic-introduction/${theme.id}`)
+    await vi.waitFor(() => expect(host.querySelector('.mwnf-essay')).not.toBeNull(), { timeout: 20000 })
+    expect(host.querySelector('.mwnf-essay__tabs')).not.toBeNull()
+    expect(host.querySelector('.mwnf-essay__panel')).not.toBeNull()
+
+    const panelName = host.querySelector('.mwnf-essay__panel-name')
+    expect(panelName).not.toBeNull()
+    expect(panelName.textContent.trim()).not.toBe('')
+
+    app.unmount()
+  }, 30000)
+
   it('declares every route by name, and leaves the catch-all to the router', () => {
     const names = config.extraViews.map((r) => r.name)
     for (const name of [
