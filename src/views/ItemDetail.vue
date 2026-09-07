@@ -89,7 +89,7 @@ const thgGalleryLinks = (record) =>
            and a badge placed directly in it would stretch to the full width. -->
       <div><span class="detail-type-badge">{{ record.type }}</span></div>
       <RecordLanguages :languages="languages" :language="language" @select="select" />
-      <h1 class="detail-title" :dir="dir" v-html="mdInline(text.name ?? record.internal_name ?? record.id, glossary)"></h1>
+      <h1 class="detail-title" :dir="dir" v-html="mdInline(text.name ?? record.internal_name ?? record.id, { glossary })"></h1>
     </template>
 
     <template #after-sheet="{ record, language, dir, glossary }">
@@ -100,7 +100,7 @@ const thgGalleryLinks = (record) =>
           <p v-if="detailText(d, language).location" class="special-feature-meta">{{ detailText(d, language).location }}</p>
           <p v-if="detailText(d, language).dates" class="special-feature-meta">{{ detailText(d, language).dates }}</p>
           <p v-if="d.artist_names?.length" class="special-feature-meta">{{ d.artist_names.join(', ') }}</p>
-          <div v-if="detailText(d, language).description" class="mwnf-sheet__block" v-html="md(detailText(d, language).description, glossary)"></div>
+          <div v-if="detailText(d, language).description" class="mwnf-sheet__block" v-html="md(detailText(d, language).description, { glossary })"></div>
           <MediaGallery v-if="d.images?.length" :images="d.images.map((img) => ({ url: img.url, alt: img.captions?.[language] ?? '' }))" variant="row" />
         </div>
       </SheetSection>

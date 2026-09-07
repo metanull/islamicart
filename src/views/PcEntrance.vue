@@ -66,7 +66,7 @@ function search() {
               v-model="selected[opt.value]"
               type="number"
               :disabled="filterType !== opt.value"
-              :placeholder="opt.value === 'begin' ? $t('islamicart.filter.fromYearHint') : $t('islamicart.filter.endDateHint')"
+              :placeholder="opt.value === 'begin' ? $t('timeline.form.fromYearHint') : $t('islamicart.filter.endDateHint')"
             />
           </div>
         </div>
