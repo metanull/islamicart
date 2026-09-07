@@ -1,4 +1,5 @@
 import { renderInline } from '@metanull/viewer-core'
+import { useInventoryData } from './useInventoryData.js'
 
 // The two `EssayView` specs this site declares: an exhibition's theme (its
 // pages, each a quote + prose narrative over a thumbnail-driven item panel)
@@ -8,6 +9,8 @@ import { renderInline } from '@metanull/viewer-core'
 // exhibition (`composables/exhibitions.js`'s `exhibitionTree`), never the
 // whole-site one, so `route()` below can read the exhibition id off the
 // tree itself rather than being handed it separately.
+
+const { dynastyLabel, partnerLabel } = useInventoryData()
 
 // The importer synthesizes a placeholder title ("Theme 5", "Page 17") when
 // the legacy source has no page_title/theme_title for a given language;
@@ -21,6 +24,34 @@ function itemEntry(node, itemId) {
 
 function localCaption(entry, language) {
   return entry?.caption?.[language] ?? entry?.caption?.en ?? {}
+}
+
+// The four unlabeled meta lines legacy showed beside an item's picture —
+// dynasty, date, location, holding museum — read the same way on both the
+// exhibition's introduction grid and a theme page's item panel: a caption
+// override first, the item's own generic translation/relations otherwise.
+function itemMetaValues(item, node, ctx) {
+  const caption = localCaption(itemEntry(node, item.id), ctx.language)
+  const own = ctx.tr('items', item.id)
+  return [
+    caption.dynasty ?? (item.dynasty_ids?.[0] ? dynastyLabel(item.dynasty_ids[0]) : ''),
+    caption.date ?? own.dates,
+    caption.location ?? own.location,
+    caption.museum ?? (item.partner_id ? partnerLabel(item.partner_id) : ''),
+  ].filter(Boolean)
+}
+
+function itemMetaFields(item, node, ctx) {
+  return itemMetaValues(item, node, ctx).map((value) => ({ label: '', value }))
+}
+
+// A "detail" close-up's own caption carries its own dynasty/date/location/
+// museum, read only from the variant's caption itself — unlike the item's
+// main view, a detail never falls back to the item's generic translation.
+function detailMetaFields(caption) {
+  return [caption.dynasty, caption.date, caption.location, caption.museum]
+    .filter(Boolean)
+    .map((value) => ({ label: '', value }))
 }
 
 // A node's own route, for the breadcrumb (`spec.breadcrumb: true` below)
@@ -67,28 +98,28 @@ export function exhibitionThemeSpec(tree) {
       route: (item) => ({ name: 'item', params: { id: item.id } }),
     },
     panel: {
-      // Only the alternate images: a "detail" close-up's own caption does
-      // not replace the panel's fields below — `EssayView` has no notion of
-      // a selected *variant*, only a selected *item* (metanull/viewer-layout#…,
-      // see the pull request description).
+      // Each "detail" close-up carries its own image *and* caption (title,
+      // justification, fields) — legacy's variant selector swapped all of
+      // them together, not just the picture. `fields` falls back to the
+      // fields below when a variant carries none of its own (the item's
+      // own main view, `EssayView`'s auto-injected primary variant).
       variants: (item, ctx) => {
         const entry = itemEntry(ctx.node, item.id)
         return (entry?.details ?? []).map((variant) => {
           const caption = localCaption(variant, ctx.language)
-          const label = caption.detail_name ?? caption.name ?? ''
-          return { url: variant.image_url, alt: label, caption: label }
+          const title = caption.detail_name ?? caption.name ?? ''
+          return {
+            image: variant.image_url,
+            alt: renderInline(String(title)),
+            caption: {
+              title: title ? renderInline(String(title)) : '',
+              justification: caption.justification ?? '',
+              fields: detailMetaFields(caption),
+            },
+          }
         })
       },
-      fields: (item, node, ctx) => {
-        const caption = localCaption(itemEntry(node, item.id), ctx.language)
-        const own = ctx.tr('items', item.id)
-        const rows = []
-        const date = caption.date ?? own.dates
-        if (date) rows.push({ label: '', value: date })
-        const location = caption.location ?? own.location
-        if (location) rows.push({ label: '', value: location })
-        return rows
-      },
+      fields: (item, node, ctx) => itemMetaFields(item, node, ctx),
     },
     navigation: 'tree',
     breadcrumb: true,
@@ -104,13 +135,11 @@ export function exhibitionIntroductionSpec(tree) {
     route: themeRoute(tree),
     // The introduction's own heading and prose are `extra.intro_header` /
     // `extra.intro_text` — a second, distinct pair of fields on the same
-    // exhibition record the splash reads `title`/`description` from, not
-    // reachable through `spec.quote`/`body` (both a flat field of the
-    // node's translation, never a nested one); the heading is declared
-    // here, the prose goes through the `before-body` slot instead.
+    // exhibition record the splash reads `title`/`description` from,
+    // reached through the dotted path `body` now accepts.
     heading: (ctx) => renderInline(String(ctx.text.extra?.intro_header ?? ctx.t('exhibition.nav.introduction'))),
     quote: false,
-    body: false,
+    body: 'extra.intro_text',
     about: () => true,
     items: {
       of: (node) =>
@@ -123,6 +152,7 @@ export function exhibitionIntroductionSpec(tree) {
         if (caption.name) override.name = renderInline(String(caption.name))
         return override
       },
+      meta: (item, ctx) => itemMetaValues(item, ctx.node, ctx),
       route: (item) => ({ name: 'item', params: { id: item.id } }),
     },
     panel: false,

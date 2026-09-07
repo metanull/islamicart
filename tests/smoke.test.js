@@ -154,6 +154,27 @@ describe('website smoke test', () => {
     expect(host.querySelector('.mwnf-essay__tabs')).not.toBeNull()
     expect(host.querySelector('.mwnf-essay__panel')).not.toBeNull()
     expect(host.querySelector('.mwnf-essay-nav, .mwnf-essay__nav')).not.toBeNull()
+
+    // `panel.variants` (metanull/viewer-layout#49, islamicart#57): the panel
+    // opens on the first item's own image with its name as the panel's
+    // title; where that item carries curated "detail" close-ups
+    // (`entry.details`), a second thumbnail is offered and swaps the whole
+    // caption — title, justification and fields together, not just the
+    // picture — when picked.
+    const panelName = host.querySelector('.mwnf-essay__panel-name')
+    expect(panelName).not.toBeNull()
+    expect(panelName.textContent.trim()).not.toBe('')
+
+    const activePage = collectionsFixture.find((c) => c.parent_id === theme.id)
+    const firstItemEntry = activePage?.items?.[0]
+    if ((firstItemEntry?.details ?? []).length > 0) {
+      const variants = host.querySelectorAll('.mwnf-essay__variant')
+      expect(variants.length).toBeGreaterThan(1)
+      const initialName = panelName.textContent
+      variants[1].click()
+      await vi.waitFor(() => expect(host.querySelector('.mwnf-essay__panel-name').textContent).not.toBe(initialName))
+    }
+
     app.unmount()
   }, 30000)
 

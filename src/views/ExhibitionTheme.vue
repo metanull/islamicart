@@ -4,7 +4,6 @@ import { useRoute } from 'vue-router'
 import { EssayView } from '@metanull/viewer-layout/views'
 import { exhibitionTree } from '../composables/exhibitions.js'
 import { exhibitionThemeSpec, themeRoute } from '../composables/exhibitionSpecs.js'
-import { useInventoryData } from '../composables/useInventoryData.js'
 
 // A theme's page: an `EssayView` over the page node — the theme itself
 // carries no quote, prose or items of its own (`useInventoryData.js`'s old
@@ -12,8 +11,12 @@ import { useInventoryData } from '../composables/useInventoryData.js'
 // which of the theme's pages is active, same key legacy used; absent, this
 // lands on the theme's first page. `spec.breadcrumb: true` renders the way
 // back (exhibition, then theme) itself; no header override is needed here.
+// The dynasty/date/location/museum lines and the detail-variant
+// justification are `spec.panel.fields`/`spec.panel.variants` now (they
+// swap together with the selected variant), so this view supplies only the
+// Previous/Next-page navigation legacy used instead of `EssayView`'s
+// tree-crossing default.
 const route = useRoute()
-const { dynastyLabel, mdInline } = useInventoryData()
 
 const exhibitionId = computed(() => decodeURIComponent(route.params.exhibitionId))
 const themeId = computed(() => decodeURIComponent(route.params.themeId))
@@ -54,33 +57,10 @@ function nextPage(id) {
   while (node && tree.parents(node.id).length !== 2) node = tree.next(node.id)
   return node
 }
-
-function entryCaption(item, node, language) {
-  const entry = node?.items?.find((e) => e.id === item.id)
-  return entry?.caption?.[language] ?? entry?.caption?.en ?? {}
-}
-// The dynasty line: read the same way the old detail panel did, placed in
-// `after-body` rather than the panel — the panel's own fields sit beside
-// the picture, this beside the narrative.
-function dynastyLine(item, node, language) {
-  const caption = entryCaption(item, node, language)
-  return caption.dynasty ?? (item.dynasty_ids?.[0] ? dynastyLabel(item.dynasty_ids[0]) : '')
-}
-function justificationText(item, node, language) {
-  return entryCaption(item, node, language).justification ?? ''
-}
 </script>
 
 <template>
   <EssayView :key="exhibitionId" :spec="spec" :id="activeId" class="content-box">
-    <template #after-body="{ selected, node, language }">
-      <p v-if="selected && dynastyLine(selected, node, language)" class="theme-dynasty-line">{{ dynastyLine(selected, node, language) }}</p>
-    </template>
-
-    <template #justifications="{ selected, node, language }">
-      <p v-if="selected && justificationText(selected, node, language)" class="theme-justification" v-html="mdInline(justificationText(selected, node, language))" />
-    </template>
-
     <template #navigation="{ node }">
       <div class="mwnf-essay__nav">
         <router-link v-if="previousPage(node.id)" :to="route_(previousPage(node.id))" class="mwnf-essay__nav-link mwnf-essay__nav-link--previous">
@@ -102,15 +82,3 @@ function justificationText(item, node, language) {
     </template>
   </EssayView>
 </template>
-
-<style scoped>
-.theme-dynasty-line { font-size: 12px; color: var(--muted); margin-top: 10px; }
-.theme-justification {
-  font-size: 13px;
-  line-height: 1.6;
-  color: var(--text);
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid var(--border);
-}
-</style>
