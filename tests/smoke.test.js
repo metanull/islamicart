@@ -107,6 +107,27 @@ describe('website smoke test', () => {
     expect(action.getAttribute('href')).toContain('permanent-collection/results')
     expect(action.getAttribute('href')).toContain('country=deu')
 
+    // The first row's date and description text match the fixture event.
+    const { default: timelineEventsData } = await import('@metanull/islamicart-data/timeline_events.json', { assert: { type: 'json' } })
+    const { default: timelineEventsTrans } = await import('@metanull/islamicart-data/translations/timeline_events.en.json', { assert: { type: 'json' } })
+    const firstDeuEvent = timelineEventsData.find((evt) => evt.country_id === 'deu')
+    if (firstDeuEvent && timelineEventsTrans[firstDeuEvent.id]) {
+      const trans = timelineEventsTrans[firstDeuEvent.id]
+      const firstRow = host.querySelector('.mwnf-timeline__row')
+      const rowDate = firstRow.querySelector('.mwnf-timeline__date')?.textContent.trim() ?? ''
+      const rowDescription = firstRow.querySelector('.mwnf-timeline__description')?.textContent.trim() ?? ''
+
+      // Verify date text matches the fixture.
+      const expectedDate = trans.date_to_description && trans.date_to_description !== trans.date_from_description
+        ? `${trans.date_from_description} – ${trans.date_to_description}`
+        : trans.date_from_description
+      expect(rowDate).toBe(expectedDate)
+
+      // Verify description contains the first six words of the fixture text.
+      const firstSixWords = trans.description.split(' ').slice(0, 6).join(' ')
+      expect(rowDescription).toContain(firstSixWords)
+    }
+
     app.unmount()
   }, 30000)
 
