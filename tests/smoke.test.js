@@ -176,6 +176,20 @@ describe('website smoke test', () => {
       await vi.waitFor(() => expect(host.querySelector('.mwnf-essay__panel-name').textContent).not.toBe(initialName))
     }
 
+    // The panel's link opens the selected item's own sheet, not a list of
+    // every item in the theme (metanull/islamicart#63) — it must read the
+    // dictionary's dedicated entry, not `EssayView`'s "See all …" default.
+    const panelLink = host.querySelector('.mwnf-essay__panel-link')
+    expect(panelLink).not.toBeNull()
+    expect(panelLink.textContent).toContain(sharedTexts.en['exhibition.theme.seeItemEntry'])
+
+    // Every page of a theme is reachable by next/previous (metanull/islamicart#63):
+    // `findExhibitionThemeWithPages` picked a theme with more than one page, so its
+    // first page (`?tab` absent) must offer a "next" link into the second (`tab=1`).
+    const nextLink = host.querySelector('.mwnf-essay__nav-link--next')
+    expect(nextLink).not.toBeNull()
+    expect(nextLink.getAttribute('href')).toContain('tab=1')
+
     // viewer-core 1.12.1 exposes tree.entity, so EssayView reads the theme's
     // translated title from the collections entity, not the internal_name.
     // The view reads these texts through the tree's own entity, and a wrong
@@ -188,6 +202,27 @@ describe('website smoke test', () => {
     const essayBody = host.querySelector('.mwnf-essay__body, .mwnf-essay__prose')
     if (themeTranslation?.description) {
       expect(essayBody?.textContent.trim().length).toBeGreaterThan(0)
+    }
+
+    app.unmount()
+  }, 30000)
+
+  // The regression this guards against (metanull/islamicart#63): the old
+  // `tree.parents(node.id).length !== 2` test never matched a real page (its
+  // ancestry runs past this tree's own root, to the exhibitions marker and
+  // the project collection above it), so `nextPage`/`previousPage` skipped
+  // every candidate and a theme's first page showed no "Next" at all.
+  it('reaches the second page of an exhibition theme by following "next"', async () => {
+    const { exhibition, theme } = findExhibitionThemeWithPages()
+    const { app, host } = await mountSite(`#/exhibitions/${exhibition.id}/theme/${theme.id}?tab=1`)
+    await vi.waitFor(() => expect(host.querySelector('.mwnf-essay')).not.toBeNull(), { timeout: 20000 })
+    expect(host.querySelector('.mwnf-essay__panel')).not.toBeNull()
+
+    const pages = collectionsFixture.filter((c) => c.parent_id === theme.id)
+    if (pages.length > 2) {
+      const nextLink = host.querySelector('.mwnf-essay__nav-link--next')
+      expect(nextLink).not.toBeNull()
+      expect(nextLink.getAttribute('href')).toContain('tab=2')
     }
 
     app.unmount()
