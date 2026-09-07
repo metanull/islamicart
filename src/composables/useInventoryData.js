@@ -7,8 +7,9 @@ import { useCatalogueData, useDataPackage } from '@metanull/viewer-core'
 // this module loads nothing, and a page pays only for what it reads.
 // Translations, the Markdown pipeline and the label shape are
 // `useCatalogueData`'s; what stays here is genuinely this site's own — the
-// project-key rule, and the Artistic Introduction / Exhibitions collection
-// trees (moving to `useCollectionTree` in wave H, left as they are for now).
+// project-key rule, and the Artistic Introduction collection tree (the
+// Exhibitions one moved to composables/exhibitions.js, over
+// `useCollectionTree`; Artistic Introduction moves the same way in #46).
 
 const dataPackage = useDataPackage()
 const manifest = dataPackage.manifest
@@ -112,56 +113,16 @@ function artIntroThemeById(id) {
   return artIntroThemes.value.find(t => t.id === id) ?? null
 }
 
-// ── Exhibitions ────────────────────────────────────────────────────────────
-//
-// Imported as generic Collections, nested under a dedicated "Virtual
-// Exhibitions" marker collection (purpose "exhibitions-root", a child of
-// the Islamic Art project collection) — needed because type='exhibition'
-// alone is not project-scoped in the legacy schema (shared with Baroque
-// Art, Sharing History, etc). From that anchor: exhibitions are its
-// children, themes are an exhibition's children, pages are a theme's
-// children (tabs). "Introduction" is not a theme — it's the exhibition's
-// own translation (extra.intro_header / extra.intro_text) plus items
-// attached directly to the exhibition collection itself (not to any
-// theme/page).
-
-const exhibitions = computed(() => {
-  const marker = findByPurpose('exhibitions-root')
-  if (!marker) return []
-  return (collections.value ?? [])
-    .filter(c => c.parent_id === marker.id)
-    .sort((a, b) => (a.display_order ?? 9999) - (b.display_order ?? 9999))
-})
-
-function exhibitionById(id) {
-  return exhibitions.value.find(e => e.id === id) ?? null
-}
-
-function exhibitionThemes(exhibitionId) {
-  const all = collections.value ?? []
-  return all
-    .filter(c => c.parent_id === exhibitionId)
-    .sort((a, b) => (a.display_order ?? 9999) - (b.display_order ?? 9999))
-    .map(theme => ({
-      ...theme,
-      pages: all
-        .filter(c => c.parent_id === theme.id)
-        .sort((a, b) => (a.display_order ?? 9999) - (b.display_order ?? 9999)),
-    }))
-}
-
-function exhibitionThemeById(exhibitionId, themeId) {
-  return exhibitionThemes(exhibitionId).find(t => t.id === themeId) ?? null
-}
-
-// ── Item cross-links: Artistic Introduction pages / Exhibitions that
-// feature a given item ───────────────────────────────────────────────────
+// ── Item cross-links: Artistic Introduction pages that feature a given item
+// ───────────────────────────────────────────────────────────────────────
 //
 // No separate export is needed for this: collections.json already lists
-// each collection's items[] (used to render Artistic Introduction pages and
-// Exhibition theme/page grids), so "which collections reference this item"
-// is just a client-side reverse lookup over the same data. See Epic 12 in
-// the islamicart parity backlog.
+// each collection's items[] (used to render Artistic Introduction pages),
+// so "which collections reference this item" is just a client-side reverse
+// lookup over the same data. See Epic 12 in the islamicart parity backlog.
+// The Exhibitions equivalent (exhibitionLinksForItem) — and the rest of the
+// Exhibitions tree (exhibitions, exhibitionThemes, exhibitionThemeById) —
+// moved to composables/exhibitions.js, over `useCollectionTree`.
 
 function collectionsContainingItem(itemId) {
   return (collections.value ?? []).filter(c => c.items?.some(it => it.id === itemId))
@@ -180,41 +141,6 @@ function artIntroLinksForItem(itemId) {
     links.push({
       themeId: theme.id,
       label: tr('collections', theme.id).title ?? theme.internal_name,
-    })
-  }
-  return links
-}
-
-function exhibitionLinksForItem(itemId) {
-  const marker = findByPurpose('exhibitions-root')
-  if (!marker) return []
-  const all = collections.value ?? []
-  const links = []
-  const seen = new Set()
-  for (const c of collectionsContainingItem(itemId)) {
-    // Either attached directly to the exhibition itself (an "introduction"
-    // item — see the Exhibitions section comment above), or to a page
-    // nested under a theme nested under the exhibition.
-    let exhibition = null
-    let themeId = null
-    if (c.parent_id === marker.id) {
-      exhibition = c
-    } else {
-      const theme = all.find(t => t.id === c.parent_id)
-      const ex = theme && all.find(e => e.id === theme.parent_id)
-      if (ex && ex.parent_id === marker.id) {
-        exhibition = ex
-        themeId = theme.id
-      }
-    }
-    if (!exhibition) continue
-    const key = `${exhibition.id}:${themeId ?? ''}`
-    if (seen.has(key)) continue
-    seen.add(key)
-    links.push({
-      exhibitionId: exhibition.id,
-      themeId,
-      label: tr('collections', exhibition.id).title ?? exhibition.internal_name,
     })
   }
   return links
@@ -243,12 +169,7 @@ export function useInventoryData() {
     artIntroRoot,
     artIntroThemes,
     artIntroThemeById,
-    exhibitions,
-    exhibitionById,
-    exhibitionThemes,
-    exhibitionThemeById,
     artIntroLinksForItem,
-    exhibitionLinksForItem,
     md,
     mdInline,
     mdStrip,

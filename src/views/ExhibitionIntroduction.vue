@@ -1,169 +1,78 @@
 <script setup>
-import { computed, watch } from 'vue'
+import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useI18n } from '@metanull/viewer-core'
+import { renderBlock } from '@metanull/viewer-core'
+import { EssayView } from '@metanull/viewer-layout/views'
+import { exhibitionTree } from '../composables/exhibitions.js'
+import { exhibitionIntroductionSpec } from '../composables/exhibitionSpecs.js'
 import { useInventoryData } from '../composables/useInventoryData.js'
 
+// The exhibition's introduction: not a theme, so it renders as an `about`
+// essay over the exhibition node itself — its own `extra.intro_header` /
+// `extra.intro_text`, read directly rather than through `spec.quote`/`body`
+// (both fields of the node's *translation*, not of a nested `extra`, which
+// `EssayView` has no way to reach — see the pull request description) — plus
+// the items attached to the exhibition collection directly.
 const route = useRoute()
 const router = useRouter()
-const {
-  availableLanguages,
-  defaultLang,
-  dynastyLabel,
-  exhibitionById,
-  itemById,
-  loadTranslations,
-  md,
-  mdInline,
-  partnerLabel,
-  tr,
-} = useInventoryData()
+const { dynastyLabel, partnerLabel, tr } = useInventoryData()
 
-const exhibition = computed(() => exhibitionById(decodeURIComponent(route.params.exhibitionId)) ?? null)
-
-// ── Language (global locale; exhibition text + item captions loaded on demand) ──
-
-const { locale } = useI18n()
-const activeLang = computed(() => availableLanguages('items').includes(locale.value) ? locale.value : defaultLang)
-watch(activeLang, lang => {
-  loadTranslations('collections', lang)
-  loadTranslations('items', lang)
-}, { immediate: true })
-
-const text = computed(() => {
-  const e = exhibition.value
-  if (!e) return {}
-  return tr('collections', e.id, activeLang.value)
-})
-
-// ── Introduction items: attached directly to the exhibition collection ────
-
-const introItems = computed(() => {
-  const e = exhibition.value
-  if (!e) return []
-  return (e.items ?? [])
-    .map(entry => ({ entry, item: itemById.value.get(entry.id) }))
-    .filter(({ item }) => item)
-    .sort((a, b) => (a.entry.display_order ?? 9999) - (b.entry.display_order ?? 9999))
-    .map(({ entry, item }) => {
-      const caption = entry.caption?.[activeLang.value] ?? {}
-      const t = tr('items', item.id, activeLang.value) ?? {}
-      return {
-        item,
-        image: item.images?.[0]?.url ?? null,
-        name: caption.name ?? t.name ?? item.internal_name ?? item.id,
-        date: caption.date ?? t.dates ?? '',
-        dynasty: caption.dynasty ?? (item.dynasty_ids?.[0] ? dynastyLabel(item.dynasty_ids[0]) : ''),
-        location: caption.location ?? t.location ?? '',
-        museum: caption.museum ?? (item.partner_id ? partnerLabel(item.partner_id) : ''),
-      }
-    })
+const exhibitionId = computed(() => decodeURIComponent(route.params.exhibitionId))
+// A new exhibition id is a new tree (`EssayView` reads `spec.tree` once, at
+// setup); `:key` below forces the remount that keeps it in step.
+const tree = exhibitionTree(exhibitionId.value)
+const spec = exhibitionIntroductionSpec(tree)
+const exhibitionTitle = computed(() => {
+  const e = tree.root.value
+  return e ? (tr('collections', e.id).title ?? e.internal_name) : ''
 })
 
 function back() {
-  if (window.history.length > 2) {
-    router.back()
-  } else if (exhibition.value) {
-    router.push(`/exhibitions/${exhibition.value.id}`)
-  } else {
-    router.push('/exhibitions')
+  if (window.history.length > 2) router.back()
+  else router.push(`/exhibitions/${exhibitionId.value}`)
+}
+
+function itemMeta(item, node, language) {
+  const entry = node.items?.find((e) => e.id === item.id)
+  const caption = entry?.caption?.[language] ?? entry?.caption?.en ?? {}
+  return {
+    date: caption.date ?? '',
+    dynasty: caption.dynasty ?? (item.dynasty_ids?.[0] ? dynastyLabel(item.dynasty_ids[0]) : ''),
+    location: caption.location ?? '',
+    museum: caption.museum ?? (item.partner_id ? partnerLabel(item.partner_id) : ''),
   }
 }
 </script>
 
 <template>
-  <div v-if="!exhibition" class="content-box not-found">
-    <p>{{ $t('islamicart.notFound.exhibition') }}</p>
-    <router-link to="/exhibitions">← {{ $t('exhibition.chapter.returnToExhibitions') }}</router-link>
-  </div>
+  <EssayView :key="exhibitionId" :spec="spec" :id="exhibitionId" class="content-box">
+    <template #before-body="{ text }">
+      <div v-if="text.extra?.intro_text" class="mwnf-sheet__block" v-html="renderBlock(String(text.extra.intro_text), { breaks: true })" />
+    </template>
 
-  <div v-else class="intro-wrap">
-    <a class="back-link" href="#" @click.prevent="back">← {{ $t('islamicart.exhibition.backTo') }} {{ text.title ?? exhibition.internal_name }}</a>
+    <template #thumbnails="{ node, items, language }">
+      <ul v-if="items.length" class="intro-items">
+        <li v-for="item in items" :key="item.id">
+          <router-link :to="{ name: 'item', params: { id: item.id } }" class="intro-item-card">
+            <img v-if="item.images?.[0]?.url" :src="item.images[0].url" :alt="item.internal_name ?? ''" loading="lazy" />
+            <p v-if="itemMeta(item, node, language).dynasty" class="intro-item-meta">{{ itemMeta(item, node, language).dynasty }}</p>
+            <p v-if="itemMeta(item, node, language).date" class="intro-item-meta">{{ itemMeta(item, node, language).date }}</p>
+            <p v-if="itemMeta(item, node, language).location" class="intro-item-meta">{{ itemMeta(item, node, language).location }}</p>
+            <p v-if="itemMeta(item, node, language).museum" class="intro-item-meta">{{ itemMeta(item, node, language).museum }}</p>
+          </router-link>
+        </li>
+      </ul>
+    </template>
 
-    <div class="content-box">
-      <h1 class="intro-title" v-html="mdInline(text.extra?.intro_header ?? $t('exhibition.nav.introduction'))" />
-
-      <div class="intro-grid">
-        <div class="intro-text-col">
-          <div v-if="text.extra?.intro_text" class="prose" v-html="md(text.extra.intro_text)" />
-        </div>
-
-        <div v-if="introItems.length" class="intro-items-col">
-          <div v-for="i in introItems" :key="i.item.id" class="intro-item-card" @click="$router.push(`/item/${encodeURIComponent(i.item.id)}`)">
-            <div class="intro-item-img-wrap">
-              <img v-if="i.image" :src="i.image" :alt="i.name" class="intro-item-img" />
-              <div v-else class="intro-item-img-placeholder" />
-            </div>
-            <h3 class="intro-item-name" v-html="mdInline(i.name)" />
-            <p v-if="i.dynasty" class="intro-item-meta">{{ i.dynasty }}</p>
-            <p v-if="i.date" class="intro-item-meta">{{ i.date }}</p>
-            <p v-if="i.location" class="intro-item-meta">{{ i.location }}</p>
-            <p v-if="i.museum" class="intro-item-meta">{{ i.museum }}</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+    <template #after>
+      <a class="back-link" href="#" @click.prevent="back">← {{ $t('islamicart.exhibition.backTo') }} {{ exhibitionTitle }}</a>
+    </template>
+  </EssayView>
 </template>
 
 <style scoped>
-.not-found { color: var(--muted); font-family: 'Roboto', sans-serif; font-size: 13px; }
-
-.intro-wrap { display: flex; flex-direction: column; gap: 10px; }
-
-.intro-title {
-  font-size: 20px;
-  font-weight: 400;
-  color: var(--heading);
-  margin-bottom: 16px;
-  line-height: 1.3;
-  font-family: 'Roboto', sans-serif;
-}
-
-.intro-grid {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 24px;
-}
-@media (max-width: 700px) { .intro-grid { grid-template-columns: 1fr; } }
-
-.intro-text-col { min-width: 0; }
-.prose { font-size: 14px; line-height: 1.7; color: var(--text); font-family: 'Roboto', sans-serif; }
-.prose :deep(p) { margin: 0 0 .75em; }
-.prose :deep(p:last-child) { margin-bottom: 0; }
-
-.intro-items-col { display: flex; flex-direction: column; gap: 14px; }
-.intro-item-card {
-  border: 1px solid var(--border);
-  background: var(--section-bg);
-  padding: 12px;
-  cursor: pointer;
-}
-.intro-item-card:hover .intro-item-name { color: var(--nav-active); }
-
-.intro-item-img-wrap {
-  width: 100%;
-  aspect-ratio: 4 / 3;
-  overflow: hidden;
-  border: 1px solid var(--border);
-  background: #f0ebdc;
-  margin-bottom: 8px;
-}
-.intro-item-img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.intro-item-img-placeholder { width: 100%; height: 100%; }
-
-.intro-item-name {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--heading);
-  margin-bottom: 4px;
-  line-height: 1.3;
-  font-family: 'Roboto', sans-serif;
-}
-.intro-item-meta {
-  font-size: 12px;
-  color: var(--muted);
-  font-family: 'Roboto', sans-serif;
-  margin-bottom: 2px;
-}
+.intro-items { list-style: none; display: flex; flex-direction: column; gap: 14px; padding: 0; }
+.intro-item-card { display: block; border: 1px solid var(--border); background: var(--section-bg); padding: 12px; }
+.intro-item-card img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; margin-bottom: 8px; }
+.intro-item-meta { font-size: 12px; color: var(--muted); margin: 0 0 2px; }
 </style>
