@@ -81,6 +81,58 @@ describe('website smoke test', () => {
     expect(totalWithEpm).not.toBe(totalWithoutEpm)
   }, 60000)
 
+  // The Timeline entrance and results move onto viewer-layout's composed
+  // `TimelineResultsView` (metanull/islamicart#47): the country/period axis,
+  // the rows and the pagination come from the spec in
+  // composables/timeline.js, and what only this website has — the per-event
+  // "View items from this period" action into the Permanent Collection —
+  // fills the row through `spec.event`. Germany ('deu') is picked because
+  // the data package carries both timeline events and items for it, so the
+  // scoped results and the action's own target are both non-empty.
+  it('renders the Timeline results scoped to a country, with the per-event action into the Permanent Collection', async () => {
+    const { app, host } = await mountSite('#/timeline/results?country=deu')
+    await vi.waitFor(() => expect(host.querySelector('.mwnf-timeline__row')).not.toBeNull(), { timeout: 20000 })
+
+    expect(host.querySelector('.section-heading').textContent).toContain('Timeline')
+    expect(host.querySelector('.section-heading').textContent).toContain('Germany')
+
+    // Every row's caption is the filtered country's own name, not an id.
+    const captions = [...host.querySelectorAll('.mwnf-timeline__caption')].map((el) => el.textContent.trim())
+    expect(captions.length).toBeGreaterThan(0)
+    expect(captions.every((caption) => caption === 'Germany')).toBe(true)
+
+    const action = host.querySelector('.mwnf-timeline__action')
+    expect(action).not.toBeNull()
+    expect(action.textContent).toContain('View items from this period')
+    expect(action.getAttribute('href')).toContain('permanent-collection/results')
+    expect(action.getAttribute('href')).toContain('country=deu')
+
+    app.unmount()
+  }, 30000)
+
+  // Decision D1: the timeline gallery of objects legacy served from
+  // `hcr_gallery.php`, regained as `/timeline/gallery` — a `CatalogueResultsView`
+  // spec scoped to the timeline's own country and period. "See gallery" is
+  // offered once objects exist for it (Germany does) and withheld once they
+  // do not (France carries timeline events but no items in this package).
+  it('offers "See gallery" once the period has objects, and the gallery lists that country\'s items', async () => {
+    const withObjects = await mountSite('#/timeline/results?country=deu')
+    await vi.waitFor(() => expect(withObjects.host.querySelector('.mwnf-timeline__gallery')).not.toBeNull(), { timeout: 20000 })
+    expect(withObjects.host.querySelector('.mwnf-timeline__gallery').textContent).toContain('See Gallery')
+    withObjects.app.unmount()
+
+    const withoutObjects = await mountSite('#/timeline/results?country=fra')
+    await vi.waitFor(() => expect(withoutObjects.host.querySelector('.mwnf-timeline__row')).not.toBeNull(), { timeout: 20000 })
+    expect(withoutObjects.host.querySelector('.mwnf-timeline__gallery')).toBeNull()
+    withoutObjects.app.unmount()
+
+    const { app, host } = await mountSite('#/timeline/gallery?country=deu')
+    await vi.waitFor(() => expect(host.querySelector('.mwnf-list__row')).not.toBeNull(), { timeout: 20000 })
+    expect(host.querySelector('.section-heading').textContent).toContain('Timeline Gallery')
+    expect(host.querySelector('.section-heading').textContent).toContain('Germany')
+    app.unmount()
+  }, 60000)
+
   // The item sheet runs on the platform's composed record view
   // (metanull/viewer-core#50): the rows come from the sheet spec, and what
   // only this website has — the dynasty cards, the Artistic Introduction
@@ -301,7 +353,7 @@ describe('website smoke test', () => {
     const names = config.extraViews.map((r) => r.name)
     for (const name of [
       'home', 'permanent-collection', 'permanent-collection-results', 'database', 'database-results',
-      'timeline', 'timeline-results', 'partners', 'partners-results', 'partner', 'dynasties',
+      'timeline', 'timeline-results', 'timeline-gallery', 'partners', 'partners-results', 'partner', 'dynasties',
       'dynasty', 'artistic-introduction', 'artistic-introduction-theme', 'exhibitions', 'exhibition',
       'exhibition-introduction', 'exhibition-theme', 'item',
     ]) {

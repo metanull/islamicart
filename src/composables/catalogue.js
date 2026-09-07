@@ -109,6 +109,43 @@ export const FACETS = {
 // and legacy's count phrased as "[N objects, M monuments]". Every text is an
 // entry name; the check that every name resolves reads them here.
 
+// The row: the thumbnail, the name, the country, the date, the dynasties
+// and the holder, the holder only when the package carries the partner, so
+// a label is never an id. Shared with the Timeline gallery
+// (composables/timeline.js), which lists the same items under the same
+// shape, just pre-scoped to a country and a period.
+export function itemRecord(item) {
+  const text = tr('items', item.id)
+  return {
+    id: item.id,
+    image: item.images?.[0]?.url ?? '',
+    imageAlt: itemLabel(item),
+    name: mdInline(text.name ?? item.internal_name ?? item.id),
+    meta: [
+      countryLabel(item.country_id),
+      text.dates,
+      (item.dynasty_ids ?? []).map(dynastyLabel).join(', '),
+      (partners.value ?? []).some((p) => p.id === item.partner_id) ? partnerLabel(item.partner_id) : '',
+    ].filter(Boolean),
+    badge: item.type,
+    to: { name: 'item', params: { id: item.id } },
+  }
+}
+
+/** Legacy's "[N objects, M monuments]" count, over whatever matched. Shared with the Timeline gallery. */
+export function objectsAndMonumentsSummary({ matching, t }) {
+  let objects = 0
+  let monuments = 0
+  for (const item of matching) {
+    if (item.type === 'monument') monuments++
+    else objects++
+  }
+  return [
+    { label: t('catalogue.results.objectsFound'), count: objects },
+    { label: t('catalogue.results.monumentsFound'), count: monuments },
+  ]
+}
+
 export const permanentCollection = {
   entity: 'items',
   keys: ['country', 'dynasty', 'partner', 'begin', 'end', 'epm'],
@@ -132,38 +169,6 @@ export const permanentCollection = {
   recordRoute: 'item',
   empty: 'catalogue.results.noResultsFilter',
   pagination: { window: 7 },
-
-  // The row: the thumbnail, the name, the country, the date, the dynasties
-  // and the holder, the holder only when the package carries the partner,
-  // so a label is never an id.
-  record: (item) => {
-    const text = tr('items', item.id)
-    return {
-      id: item.id,
-      image: item.images?.[0]?.url ?? '',
-      imageAlt: itemLabel(item),
-      name: mdInline(text.name ?? item.internal_name ?? item.id),
-      meta: [
-        countryLabel(item.country_id),
-        text.dates,
-        (item.dynasty_ids ?? []).map(dynastyLabel).join(', '),
-        (partners.value ?? []).some((p) => p.id === item.partner_id) ? partnerLabel(item.partner_id) : '',
-      ].filter(Boolean),
-      badge: item.type,
-      to: { name: 'item', params: { id: item.id } },
-    }
-  },
-
-  summary: ({ matching, t }) => {
-    let objects = 0
-    let monuments = 0
-    for (const item of matching) {
-      if (item.type === 'monument') monuments++
-      else objects++
-    }
-    return [
-      { label: t('catalogue.results.objectsFound'), count: objects },
-      { label: t('catalogue.results.monumentsFound'), count: monuments },
-    ]
-  },
+  record: itemRecord,
+  summary: objectsAndMonumentsSummary,
 }
