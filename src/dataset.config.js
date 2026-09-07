@@ -165,6 +165,7 @@ export default {
       path: '/item/:id',
       name: 'item',
       component: () => import('./views/ItemDetail.vue'),
+      props: (route) => ({ id: decodeURIComponent(route.params.id) }),
       meta: meta('database', ['items', 'dynasties', 'collections', 'partners', 'countries']),
     },
   ],

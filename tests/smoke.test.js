@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
-import { createViewer, mergeMessages } from '@metanull/viewer-core'
+import { describe, expect, it, vi } from 'vitest'
+import { createViewer, loadEntities, mergeMessages } from '@metanull/viewer-core'
 import { checkOfferedLanguages } from '@metanull/viewer-core/testing'
 import { catalogues as sharedTexts } from '@metanull/viewer-i18n/standalone'
 import ownTexts from '../locales/en.json'
@@ -11,8 +11,9 @@ import { useInventoryData } from '../src/composables/useInventoryData.js'
 // nothing about the chrome — every text would render as its own name.
 const messages = mergeMessages(sharedTexts, { en: ownTexts })
 
-async function mountSite() {
-  window.location.hash = '#/'
+// Mounted on the address under test, as a visitor arrives from a link.
+async function mountSite(hash = '#/') {
+  window.location.hash = hash
   const app = createViewer({ ...config, messages })
   const host = document.createElement('div')
   document.body.appendChild(host)
@@ -39,6 +40,39 @@ describe('website smoke test', () => {
     // being changed. A blocking check that fails at random teaches people to
     // re-run it rather than read it.
   }, 20000)
+
+  // The item sheet runs on the platform's composed record view
+  // (metanull/viewer-core#50): the rows come from the sheet spec, and what
+  // only this website has — the dynasty cards, the Artistic Introduction
+  // links, the type badge — fills the view's slots. A monument and an object
+  // read different field orders (composables/sheet.js), so both are mounted.
+  it('renders an object sheet on the composed record view', async () => {
+    const [items] = await loadEntities(['items'])
+    const object = items.find((i) => i.type === 'object')
+    const { app, host } = await mountSite(`#/item/${encodeURIComponent(object.id)}`)
+    await vi.waitFor(() => expect(host.querySelector('.mwnf-sheet__label')).not.toBeNull(), { timeout: 20000 })
+    expect(host.querySelector('.mwnf-record')).not.toBeNull()
+    expect(host.querySelector('.detail-type-badge').textContent.trim()).toBe('object')
+    expect(host.querySelector('.detail-title').textContent.trim()).not.toBe('')
+    app.unmount()
+  }, 60000)
+
+  it('renders a monument sheet with a different field order than an object', async () => {
+    const [items] = await loadEntities(['items'])
+    const monument = items.find((i) => i.type === 'monument')
+    const { app, host } = await mountSite(`#/item/${encodeURIComponent(monument.id)}`)
+    await vi.waitFor(() => expect(host.querySelector('.mwnf-sheet__label')).not.toBeNull(), { timeout: 20000 })
+    expect(host.querySelector('.detail-type-badge').textContent.trim()).toBe('monument')
+    expect(host.querySelector('.detail-title').textContent.trim()).not.toBe('')
+    const labels = [...host.querySelectorAll('.mwnf-sheet__label')].map((el) => el.textContent.trim())
+    // A monument's date reads "Date of monument", an object's "Date of
+    // object" — the two specs in composables/sheet.js name the same field
+    // differently, and neither reads a holding museum.
+    expect(labels).toContain('Date of monument')
+    expect(labels).not.toContain('Date of object')
+    expect(labels).not.toContain('Holding museum')
+    app.unmount()
+  }, 60000)
 
   it('declares every route by name, and leaves the catch-all to the router', () => {
     const names = config.extraViews.map((r) => r.name)
