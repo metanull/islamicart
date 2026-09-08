@@ -30,14 +30,14 @@ function activeFilterLabel() {
 
 <template>
   <div>
-    <RouterLink to="/timeline" class="back-link">‹ {{ $t('timeline.nav.backLink') }}</RouterLink>
+    <RouterLink to="/timeline" class="mwnf-back-bar">‹ {{ $t('timeline.nav.backLink') }}</RouterLink>
 
-    <h1 class="section-heading">
+    <h1 class="mwnf-heading">
       {{ $t('islamicart.nav.timeline') }}
       <span v-if="activeFilterLabel()" class="heading-filter"> — {{ activeFilterLabel() }}</span>
     </h1>
 
-    <div class="content-box">
+    <div class="mwnf-panel">
       <TimelineResultsView :spec="timelineResults" />
     </div>
   </div>

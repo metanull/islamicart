@@ -36,9 +36,9 @@ function back() {
 
 <template>
   <div>
-    <a class="back-link" href="#" @click.prevent="back">‹ {{ $t('timeline.nav.backLink') }}</a>
+    <a class="mwnf-back-bar" href="#" @click.prevent="back">‹ {{ $t('timeline.nav.backLink') }}</a>
 
-    <h1 class="section-heading">
+    <h1 class="mwnf-heading">
       {{ $t('timeline.results.galleryHeading') }}
       <span v-if="activeFilterLabel()" class="heading-filter"> — {{ activeFilterLabel() }}</span>
     </h1>

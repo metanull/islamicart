@@ -156,4 +156,28 @@
   --mwnf-featured-name-color: #4c420e;
   --mwnf-featured-meta-size: 0.8125rem;
   --mwnf-featured-meta-color: #4c4000;
+
+  /* ---------- Content classes ---------- */
+  /* The building blocks (viewer-layout ^2.10.0) that replaced this site's own
+     .content-box/.section-heading/.form-table/.btn/.back-link, themed to the
+     same legacy identity these tokens already carry above. */
+  --mwnf-panel-border: 1px solid #a19869;
+  --mwnf-heading-color: #4c420e;
+  --mwnf-heading-border: 2px solid #e0b700;
+  --mwnf-form-table-th-color: #4c4000;
+  --mwnf-button-background: #ffd600;
+  --mwnf-button-text: #4c4214;
+  --mwnf-button-hover-background: #e0b700;
+  --mwnf-button-letter-spacing: 0.03em;
+  --mwnf-button-secondary-background: #a19869;
+  --mwnf-button-secondary-text: #222222;
+  --mwnf-button-secondary-hover-background: #8a7d52;
+  --mwnf-select-border: 1px solid #a19869;
+  --mwnf-select-background: #fdfbed;
+  --mwnf-select-text: #222222;
+  --mwnf-select-focus-outline: 1px solid #e0b700;
+  /* The shared class themes a <button> child only (the kit's own BackLink
+     component); this site's back links are plain anchors, so no padding box
+     is wanted around them — site.css supplies their colour instead. */
+  --mwnf-back-bar-padding: 0;
 }

@@ -11,38 +11,38 @@ function browse(type, project) {
 
 <template>
   <div>
-    <h1 class="section-heading">{{ $t('islamicart.nav.partners') }}</h1>
+    <h1 class="mwnf-heading">{{ $t('islamicart.nav.partners') }}</h1>
 
-    <div class="content-box">
+    <div class="mwnf-panel">
       <I18nText tag="p" class="intro-text" keypath="islamicart.partner.introDiscover" />
 
-      <table class="form-table filter-table">
+      <table class="mwnf-form-table filter-table">
         <tbody>
           <tr>
             <th><label>{{ $t('partner.list.museums') }}</label></th>
             <td>
-              <button class="btn" @click="browse('museum', 'ISL')">{{ $t('islamicart.action.browseMuseums') }} →</button>
+              <button class="mwnf-button" @click="browse('museum', 'ISL')">{{ $t('islamicart.action.browseMuseums') }} →</button>
             </td>
           </tr>
           <tr>
             <th><label>{{ $t('islamicart.partner.others') }}</label></th>
             <td>
-              <button class="btn" @click="browse('institution', 'ISL')">{{ $t('islamicart.action.browseInstitutions') }} →</button>
+              <button class="mwnf-button" @click="browse('institution', 'ISL')">{{ $t('islamicart.action.browseInstitutions') }} →</button>
             </td>
           </tr>
         </tbody>
       </table>
     </div>
 
-    <div class="content-box">
+    <div class="mwnf-panel">
       <I18nText tag="p" class="intro-text" keypath="islamicart.partner.introExplore" />
 
-      <table class="form-table filter-table">
+      <table class="mwnf-form-table filter-table">
         <tbody>
           <tr>
             <th><label>{{ $t('partner.list.museums') }}</label></th>
             <td>
-              <button class="btn" @click="browse('museum', 'EPM')">{{ $t('islamicart.action.browseMuseums') }} →</button>
+              <button class="mwnf-button" @click="browse('museum', 'EPM')">{{ $t('islamicart.action.browseMuseums') }} →</button>
             </td>
           </tr>
         </tbody>
@@ -60,6 +60,8 @@ function browse(type, project) {
   font-family: 'Roboto', sans-serif;
 }
 
+/* This page's own override of the shared form table: a browse label reads
+   left-to-right here, not the label/value pair `.mwnf-form-table` themes. */
 .filter-table th {
   text-align: left;
   font-weight: normal;

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
-import { createViewer, loadEntities, mergeMessages } from '@metanull/viewer-core'
-import { checkOfferedLanguages } from '@metanull/viewer-core/testing'
+import { loadEntities, mergeMessages } from '@metanull/viewer-core'
+import { checkOfferedLanguages, checkRoutes, checkSectionMeta, checkTextsRendered, mountSite as mountOn } from '@metanull/viewer-core/testing'
 import { catalogues as sharedTexts } from '@metanull/viewer-i18n/standalone'
 import ownTexts from '../locales/en.json'
 import config from '../src/dataset.config.js'
@@ -11,16 +11,10 @@ import { useInventoryData } from '../src/composables/useInventoryData.js'
 // nothing about the chrome — every text would render as its own name.
 const messages = mergeMessages(sharedTexts, { en: ownTexts })
 
-// Mounted on the address under test, as a visitor arrives from a link.
-async function mountSite(hash = '#/') {
-  window.location.hash = hash
-  const app = createViewer({ ...config, messages })
-  const host = document.createElement('div')
-  document.body.appendChild(host)
-  app.mount(host)
-  await app.config.globalProperties.$router.isReady()
-  return { app, host }
-}
+// The kit's own `mountSite`, bound to this website's config and messages —
+// every call site below reads exactly as it did when this file built the
+// same mount itself.
+const mountSite = (hash) => mountOn(config, messages, hash)
 
 describe('website smoke test', () => {
   it('mounts against the configured data package', async () => {
@@ -51,7 +45,7 @@ describe('website smoke test', () => {
     expect(host.querySelector('.mwnf-catalogue')).not.toBeNull()
     expect(host.querySelector('.mwnf-filter')).not.toBeNull()
     expect(host.querySelector('.mwnf-facet--checkbox input[type="checkbox"]')).not.toBeNull()
-    expect(host.querySelector('.section-heading').textContent).toContain('Permanent Collection')
+    expect(host.querySelector('.mwnf-heading').textContent).toContain('Permanent Collection')
     // Legacy's count, in its two halves: objects and monuments.
     expect(host.querySelectorAll('.mwnf-summary__count').length).toBe(2)
     app.unmount()
@@ -93,8 +87,8 @@ describe('website smoke test', () => {
     const { app, host } = await mountSite('#/timeline/results?country=deu')
     await vi.waitFor(() => expect(host.querySelector('.mwnf-timeline__row')).not.toBeNull(), { timeout: 20000 })
 
-    expect(host.querySelector('.section-heading').textContent).toContain('Timeline')
-    expect(host.querySelector('.section-heading').textContent).toContain('Germany')
+    expect(host.querySelector('.mwnf-heading').textContent).toContain('Timeline')
+    expect(host.querySelector('.mwnf-heading').textContent).toContain('Germany')
 
     // Every row's caption is the filtered country's own name, not an id.
     const captions = [...host.querySelectorAll('.mwnf-timeline__caption')].map((el) => el.textContent.trim())
@@ -149,8 +143,8 @@ describe('website smoke test', () => {
 
     const { app, host } = await mountSite('#/timeline/gallery?country=deu')
     await vi.waitFor(() => expect(host.querySelector('.mwnf-list__row')).not.toBeNull(), { timeout: 20000 })
-    expect(host.querySelector('.section-heading').textContent).toContain('Timeline Gallery')
-    expect(host.querySelector('.section-heading').textContent).toContain('Germany')
+    expect(host.querySelector('.mwnf-heading').textContent).toContain('Timeline Gallery')
+    expect(host.querySelector('.mwnf-heading').textContent).toContain('Germany')
     app.unmount()
   }, 60000)
 
@@ -292,7 +286,7 @@ describe('website smoke test', () => {
     const { app, host } = await mountSite('#/partners/results?type=museum&project=ISL')
     await vi.waitFor(() => expect(host.querySelector('.mwnf-partner-list__row')).not.toBeNull(), { timeout: 20000 })
 
-    expect(host.querySelector('.section-heading').textContent).toContain('Partner Museums')
+    expect(host.querySelector('.mwnf-heading').textContent).toContain('Partner Museums')
 
     const jordanGroup = [...host.querySelectorAll('.mwnf-partner-list__group')].find((el) =>
       el.querySelector('.mwnf-partner-list__group-title')?.textContent.includes('Jordan')
@@ -368,7 +362,7 @@ describe('website smoke test', () => {
 
     const { app, host } = await mountSite('#/exhibitions')
     await vi.waitFor(() => expect(host.querySelector('.mwnf-cards')).not.toBeNull(), { timeout: 20000 })
-    expect(host.querySelector('.section-heading').textContent).toContain('Exhibitions')
+    expect(host.querySelector('.mwnf-heading').textContent).toContain('Exhibitions')
     app.unmount()
   }, 30000)
 
@@ -487,7 +481,7 @@ describe('website smoke test', () => {
 
     const { app, host } = await mountSite('#/artistic-introduction')
     await vi.waitFor(() => expect(host.querySelector('.mwnf-text-page')).not.toBeNull(), { timeout: 20000 })
-    expect(host.querySelector('.section-heading').textContent).toContain('Artistic Introduction')
+    expect(host.querySelector('.mwnf-heading').textContent).toContain('Artistic Introduction')
     expect(host.querySelector('.mwnf-cards')).not.toBeNull()
     app.unmount()
   }, 30000)
@@ -523,24 +517,23 @@ describe('website smoke test', () => {
   }, 30000)
 
   it('declares every route by name, and leaves the catch-all to the router', () => {
-    const names = config.extraViews.map((r) => r.name)
-    for (const name of [
-      'home', 'permanent-collection', 'permanent-collection-results', 'database', 'database-results',
-      'timeline', 'timeline-results', 'timeline-gallery', 'partners', 'partners-results', 'partner',
-      'artistic-introduction', 'artistic-introduction-theme', 'exhibitions', 'exhibition',
-      'exhibition-introduction', 'exhibition-theme', 'item',
-    ]) {
-      expect(names).toContain(name)
-    }
+    // This website has never been published under another URL shape, so
+    // there is no legacy path to require here.
+    expect(checkRoutes(config, {
+      names: [
+        'home', 'permanent-collection', 'permanent-collection-results', 'database', 'database-results',
+        'timeline', 'timeline-results', 'timeline-gallery', 'partners', 'partners-results', 'partner',
+        'artistic-introduction', 'artistic-introduction-theme', 'exhibitions', 'exhibition',
+        'exhibition-introduction', 'exhibition-theme', 'item',
+      ],
+    })).toEqual([])
+    expect(config.legacyRoutes).toEqual([])
     // Decision D5: the dynasties list/sheet were an addition over legacy
     // (which only ever popped dynasties up from an item sheet); the item
     // sheet's own popout (metanull/islamicart#50) is their only trace now.
+    const names = config.extraViews.map((r) => r.name)
     expect(names).not.toContain('dynasties')
     expect(names).not.toContain('dynasty')
-    expect(config.extraViews.every((r) => r.name)).toBe(true)
-    expect(config.extraViews.some((r) => r.path.includes('pathMatch'))).toBe(false)
-    // This website has never been published under another URL shape.
-    expect(config.legacyRoutes).toEqual([])
   })
 
   it('declares the entities every route reads', () => {
@@ -556,10 +549,7 @@ describe('website smoke test', () => {
     // The menu highlights the current section by reading `meta.section`
     // (viewer-core's `useSection()`); a route without one leaves the menu
     // with nothing active.
-    for (const route of config.extraViews) {
-      expect(typeof route.meta?.section, route.name).toBe('string')
-      expect(route.meta.section, route.name).not.toBe('')
-    }
+    expect(checkSectionMeta(config)).toEqual([])
   })
 
   // The record lookups are viewer-core's shared indexes now, and a Map is not
@@ -604,7 +594,7 @@ describe('website smoke test', () => {
     expect(text).toContain('Welcome to Islamic Art')
     // Nothing rendered as a bare entry name, which is what a missing text
     // looks like — there is no exception to throw for one.
-    expect(text).not.toMatch(/\b(islamicart|core|layout)\.[a-z]/i)
+    expect(checkTextsRendered(host, { namespaces: ['islamicart', 'core', 'layout'] })).toEqual([])
 
     app.unmount()
   }, 20000)

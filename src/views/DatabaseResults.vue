@@ -24,19 +24,19 @@ watch(() => route.query.lang, (lang) => { if (lang) loadTranslations('items', la
 
 <template>
   <div>
-    <h1 class="section-heading">{{ $t('islamicart.nav.database') }} — {{ $t('catalogue.results.heading') }}</h1>
+    <h1 class="mwnf-heading">{{ $t('islamicart.nav.database') }} — {{ $t('catalogue.results.heading') }}</h1>
 
-    <div class="content-box">
+    <div class="mwnf-panel">
       <CatalogueResultsView :spec="databaseResults">
         <template #actions>
-          <RouterLink :to="{ name: 'database' }" class="btn btn-secondary small">{{ $t('catalogue.search.newSearch') }}</RouterLink>
+          <RouterLink :to="{ name: 'database' }" class="mwnf-button mwnf-button--secondary small">{{ $t('catalogue.search.newSearch') }}</RouterLink>
         </template>
 
         <template #filters="{ filters }">
-          <select v-model="filters.field4" class="field">
+          <select v-model="filters.field4" class="mwnf-select field">
             <option v-for="f in fieldOptions" :key="f.value" :value="f.value">{{ f.label }}</option>
           </select>
-          <select v-model="filters.op4" class="cond">
+          <select v-model="filters.op4" class="mwnf-select cond">
             <option value="AND">{{ $t('catalogue.search.and') }}</option>
             <option value="OR">{{ $t('catalogue.search.or') }}</option>
           </select>
@@ -52,7 +52,12 @@ watch(() => route.query.lang, (lang) => { if (lang) loadTranslations('items', la
 </template>
 
 <style scoped>
-.btn.small { font-size: 12px; padding: 4px 12px; text-decoration: none; }
+/* The kit has no compact button size, so this page's "New search" action
+   (beside the results, not a full-width form action) keeps its own. */
+.mwnf-button.small { font-size: 12px; padding: 4px 12px; text-decoration: none; }
+/* `.mwnf-select` is a full-width form control; the refine row's two selects
+   sit inline beside each other instead, so only their width is this page's
+   own. */
 .field { width: 200px; }
 .cond { width: 60px; margin-left: 8px; }
 </style>

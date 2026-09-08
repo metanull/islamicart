@@ -38,14 +38,14 @@ const otherTypeLabel = computed(() =>
 
 <template>
   <div>
-    <RouterLink to="/partners" class="back-link">‹ {{ $t('partner.nav.back') }}</RouterLink>
+    <RouterLink to="/partners" class="mwnf-back-bar">‹ {{ $t('partner.nav.back') }}</RouterLink>
 
-    <h1 class="section-heading">
+    <h1 class="mwnf-heading">
       {{ typeHeading }}
       <span class="heading-project"> — {{ projectLabel }}</span>
     </h1>
 
-    <div class="content-box">
+    <div class="mwnf-panel">
       <p class="other-type">
         <RouterLink :to="{ path: '/partners/results', query: { type: otherType, project } }">
           {{ otherTypeLabel }}

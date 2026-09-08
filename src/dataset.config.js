@@ -37,11 +37,22 @@ export default {
 
   shell: SiteShell,
 
-  // Only what is not a text. The menu labels and the footer line are texts, so
-  // they are built in SiteShell.vue where the catalogue is installed; the
-  // language names below come from the data package, not from a translator.
+  // viewer-layout's `SiteShell` (mounted in SiteShell.vue) reads this to
+  // build the menu itself: each label is an entry name it resolves through
+  // `t()`, and the entry whose `section` matches the route's `meta.section`
+  // (via `useSection()`) is marked active. The footer line stays a prop on
+  // SiteShell.vue directly — `config.navigation` has no field for it.
   navigation: {
     languages: languageLabels(languages),
+    links: [
+      { section: 'home', label: 'core.nav.home', to: { name: 'home' } },
+      { section: 'permanent-collection', label: 'islamicart.nav.permanentCollection', to: { name: 'permanent-collection' } },
+      { section: 'database', label: 'islamicart.nav.database', to: { name: 'database' } },
+      { section: 'timeline', label: 'islamicart.nav.timeline', to: { name: 'timeline' } },
+      { section: 'partners', label: 'islamicart.nav.partners', to: { name: 'partners' } },
+      { section: 'artistic-introduction', label: 'islamicart.nav.artisticIntroduction', to: { name: 'artistic-introduction' } },
+      { section: 'exhibitions', label: 'islamicart.nav.exhibitions', to: { name: 'exhibitions' } },
+    ],
   },
 
   // The route map: every route named, kebab-case sections, the package id in

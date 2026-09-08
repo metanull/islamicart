@@ -1,47 +1,28 @@
 <script setup>
-// PageShell with the legacy MWNF header lockup ("Museum With No Frontiers"
-// over "Islamic Art") supplied through the header slot. All other PageShell
-// props and the update:language event pass through untouched via $attrs.
-import { computed } from 'vue'
-import { useI18n, useSection } from '@metanull/viewer-core'
-import { PageShell } from '@metanull/viewer-layout'
-
-const { t } = useI18n()
-
-// The menu is built here rather than in dataset.config.js because a label is a
-// text and a text is only available inside the application: `t` needs the
-// installed catalogue, and every name has to be written out where it is used
-// so `viewer-i18n-check` can see it. The config keeps what is not a text —
-// the offered languages — and PageShell receives these links after $attrs, so
-// they take precedence over anything the config still passes. Which entry is
-// active is the section the route declares (`meta.section`), read through
-// viewer-core's `useSection()` — never derived from the path.
-const section = useSection()
-const navLinks = computed(() => [
-  { label: t('core.nav.home'), href: '#/', active: section.value === 'home' },
-  { label: t('islamicart.nav.permanentCollection'), href: '#/permanent-collection', active: section.value === 'permanent-collection' },
-  { label: t('islamicart.nav.database'), href: '#/database', active: section.value === 'database' },
-  { label: t('islamicart.nav.timeline'), href: '#/timeline', active: section.value === 'timeline' },
-  { label: t('islamicart.nav.partners'), href: '#/partners', active: section.value === 'partners' },
-  { label: t('islamicart.nav.artisticIntroduction'), href: '#/artistic-introduction', active: section.value === 'artistic-introduction' },
-  { label: t('islamicart.nav.exhibitions'), href: '#/exhibitions', active: section.value === 'exhibitions' },
-])
+// viewer-layout's own SiteShell composes PageShell from dataset.config.js's
+// `navigation` (the menu, the active entry, the footer link list) — see its
+// README "Site shell" section. This file supplies only what a config cannot:
+// the header lockup ("Museum With No Frontiers" over "Islamic Art"), through
+// the #brand slot, and the footer copyright line (`config.navigation` has no
+// field for a plain footer text). Everything else — $attrs, listeners such as
+// `update:language` — passes straight through.
+//
+// Exported from `/components`, not the package root (it reads
+// `@metanull/viewer-core` itself); the Vitest config lists `viewer-layout`
+// in `server.deps.inline` for the same reason.
+import { SiteShell } from '@metanull/viewer-layout/components'
 </script>
 
 <template>
-  <PageShell
-    v-bind="$attrs"
-    :nav-links="navLinks"
-    :footer-text="$t('islamicart.identity.copyright')"
-  >
-    <template #header>
+  <SiteShell v-bind="$attrs" :footer-text="$t('islamicart.identity.copyright')">
+    <template #brand>
       <a class="site-logo" href="#/">
         <span class="site-logo-org">{{ $t('islamicart.identity.organisation') }}</span>
         <span class="site-logo-title">{{ $t('islamicart.identity.title') }}</span>
       </a>
     </template>
     <slot />
-  </PageShell>
+  </SiteShell>
 </template>
 
 <style scoped>

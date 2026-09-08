@@ -13,7 +13,7 @@ import { useInventoryData } from '../composables/useInventoryData.js'
 // credits have no home in `TextPageView`'s own contract (heading is an
 // entry name only, and it carries no slots), so this view renders them
 // itself, around it, same as the site's other entrance pages render their
-// own `section-heading`.
+// own `.mwnf-heading`.
 const { mdInline, mdStrip, tr } = useInventoryData()
 
 const rootText = computed(() => {
@@ -38,20 +38,20 @@ const themeCards = computed(() => {
 </script>
 
 <template>
-  <div v-if="!artIntroRoot" class="content-box not-found">
+  <div v-if="!artIntroRoot" class="mwnf-panel not-found">
     <p>{{ $t('islamicart.notFound.artIntro') }}</p>
   </div>
 
   <div v-else>
-    <h1 class="section-heading">{{ $t('islamicart.nav.artisticIntroduction') }}</h1>
+    <h1 class="mwnf-heading">{{ $t('islamicart.nav.artisticIntroduction') }}</h1>
 
-    <div class="content-box intro-box">
+    <div class="mwnf-panel intro-box">
       <h2 v-if="rootText.extra?.subtitle" class="intro-subtitle" v-html="mdInline(rootText.extra.subtitle)" />
       <TextPageView :spec="spec" />
       <p v-if="rootText.extra?.credits" class="intro-credits" v-html="mdInline(rootText.extra.credits)" />
     </div>
 
-    <div class="content-box">
+    <div class="mwnf-panel">
       <p class="intro-text">{{ $t('islamicart.artIntro.selectTheme') }}</p>
       <SectionCards :cards="themeCards" variant="rows" />
     </div>
