@@ -35,8 +35,8 @@ function back() {
 
 <template>
   <div class="theme-wrap">
-    <a class="back-link" href="#" @click.prevent="back">← {{ $t('islamicart.artIntro.backLink') }}</a>
-    <EssayView :spec="spec" :id="activeId" class="content-box" />
+    <a class="mwnf-back-bar" href="#" @click.prevent="back">← {{ $t('islamicart.artIntro.backLink') }}</a>
+    <EssayView :spec="spec" :id="activeId" class="mwnf-panel" />
   </div>
 </template>
 

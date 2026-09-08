@@ -59,9 +59,9 @@ function heldItems(record) {
 </script>
 
 <template>
-  <RecordView :spec="partnerSheet" :id="id" class="detail content-box">
+  <RecordView :spec="partnerSheet" :id="id" class="detail mwnf-panel">
     <template #header="{ record, text, language, languages, select, dir }">
-      <a class="back-link" href="#" @click.prevent="back">← {{ $t('partner.nav.back') }}</a>
+      <a class="mwnf-back-bar" href="#" @click.prevent="back">← {{ $t('partner.nav.back') }}</a>
 
       <div class="detail-type-badge">{{ partnerTypeLabel(record) }}</div>
       <RecordLanguages :languages="languages" :language="language" @select="select" />
@@ -72,7 +72,7 @@ function heldItems(record) {
       </h2>
 
       <div v-if="record.item_count" class="view-items-row">
-        <RouterLink :to="viewItemsLink(record)" class="btn">
+        <RouterLink :to="viewItemsLink(record)" class="mwnf-button">
           {{ viewItemsLabel(record) }} ({{ record.item_count }}) →
         </RouterLink>
         <a v-if="text.website" :href="normalizeUrl(text.website)" target="_blank" rel="noopener" class="homepage-link">
@@ -111,15 +111,14 @@ function heldItems(record) {
       </SheetSection>
 
       <!-- Legacy showed the map for a museum's own building, never an
-           institution's (which may cover a whole country's monuments). -->
+           institution's (which may cover a whole country's monuments).
+           PartnerMap's own defaults (viewer-layout 2.10.0) already name
+           partner.map.map/.mapOf/.openInOpenStreetMap. -->
       <SheetSection v-if="record.type === 'museum'" :heading="$t('partner.map.map')" :dir="dir">
         <PartnerMap
           :latitude="record.latitude"
           :longitude="record.longitude"
           :zoom="record.map_zoom ?? 15"
-          map-title-entry="partner.map.map"
-          map-of-entry="partner.map.mapOf"
-          open-map-link-entry="exhibition.action.openInOpenStreetMap"
           :label="text.name ?? record.internal_name ?? record.id"
         />
       </SheetSection>

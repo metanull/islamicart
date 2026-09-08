@@ -2,6 +2,17 @@ import { fileURLToPath } from 'node:url'
 import vue from '@vitejs/plugin-vue'
 import { defineConfig } from 'vite'
 
+// The shared shape every website's vite.config.js should be is viewer-core's
+// `defineViewerConfig()` (@metanull/viewer-core/testing) — but that barrel
+// re-exports `mountSite` from `smoke.js`, which imports `createViewer.js`,
+// which imports `AppRoot.vue` and the base stylesheet at module scope. A
+// plain `vite.config.js` is loaded by Vite's own config loader in bare
+// Node, outside any bundler transform, so that chain fails immediately with
+// "Unknown file extension .vue" — reproduced with `node -e
+// "import('@metanull/viewer-core/testing')"` directly, so it is not a Vite
+// quirk. Until viewer-core's testing barrel stops pulling in the runtime
+// eagerly (the fix belongs there, not here), this file keeps the shape
+// `defineViewerConfig` would produce, by hand.
 export default defineConfig({
   // GitHub Pages serves the site under /<repo>/; the deploy workflow sets
   // BASE_PATH accordingly. Local dev and root deployments use /.
@@ -34,6 +45,7 @@ export default defineConfig({
   },
   test: {
     environment: 'jsdom',
+    testTimeout: 60000,
     server: {
       deps: {
         // viewer-core ships .vue source; Node cannot load it unless Vitest

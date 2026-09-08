@@ -32,9 +32,9 @@ function back() {
 </script>
 
 <template>
-  <EssayView :key="exhibitionId" :spec="spec" :id="exhibitionId" class="content-box">
+  <EssayView :key="exhibitionId" :spec="spec" :id="exhibitionId" class="mwnf-panel">
     <template #after>
-      <a class="back-link" href="#" @click.prevent="back">← {{ $t('islamicart.exhibition.backTo') }} {{ exhibitionTitle }}</a>
+      <a class="mwnf-back-bar" href="#" @click.prevent="back">← {{ $t('islamicart.exhibition.backTo') }} {{ exhibitionTitle }}</a>
     </template>
   </EssayView>
 </template>
