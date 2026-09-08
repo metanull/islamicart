@@ -28,6 +28,17 @@ export default {
 
   siteName: manifest.site?.names?.en ?? 'Islamic Art',
 
+  // The absolute origin this build is deployed at, base path included, no
+  // trailing slash — read by `sourceUrl()` for the citation permalink under
+  // a sheet and by the footer's terms link. This is the GitHub Pages address
+  // (org.github.io/<repo>) until the domain is decided; the base path here
+  // is the same one `vite.config.js`'s `base` resolves to for this repo
+  // (`BASE_PATH`, set by the deploy workflow from the repo name), so the two
+  // must be kept in step if the site ever moves off GitHub Pages.
+  site: {
+    origin: 'https://metanull.github.io/islamicart',
+  },
+
   // All pages are website-specific views (below) — no generic entity pages.
   features: {
     entities: [],
