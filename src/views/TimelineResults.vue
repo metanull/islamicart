@@ -1,7 +1,7 @@
 <script setup>
 import { useRoute } from 'vue-router'
-import { useI18n } from '@metanull/viewer-core'
-import { TimelineResultsView } from '@metanull/viewer-layout/views'
+import { useI18n } from '@museumwnf/viewer-core'
+import { TimelineResultsView } from '@museumwnf/viewer-layout/views'
 import { useInventoryData } from '../composables/useInventoryData.js'
 import { timelineResults } from '../composables/timeline.js'
 

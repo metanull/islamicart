@@ -1,7 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { EssayView } from '@metanull/viewer-layout/views'
+import { EssayView } from '@museumwnf/viewer-layout/views'
 import { artIntroTree } from '../composables/artIntro.js'
 import { artIntroThemeSpec } from '../composables/artIntroSpecs.js'
 

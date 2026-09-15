@@ -1,4 +1,4 @@
-import { renderInline } from '@metanull/viewer-core'
+import { renderInline } from '@museumwnf/viewer-core'
 import { artIntroRoot } from './artIntro.js'
 import { useInventoryData } from './useInventoryData.js'
 

@@ -1,4 +1,4 @@
-import { centuryPresets, combineExpansions, countryExpansion, glossaryExpansion, useKeywordIndex } from '@metanull/viewer-core'
+import { centuryPresets, combineExpansions, countryExpansion, glossaryExpansion, useKeywordIndex } from '@museumwnf/viewer-core'
 import { useInventoryData } from './useInventoryData.js'
 import { DATE_MODE, PAGE_SIZE, SEARCH_FIELDS, SEARCH_FIELD_ENTRIES, inScope } from './catalogue.js'
 

@@ -1,7 +1,7 @@
 <script setup>
 import { computed } from 'vue'
-import { TextPageView } from '@metanull/viewer-layout/views'
-import { SectionCards } from '@metanull/viewer-layout/content'
+import { TextPageView } from '@museumwnf/viewer-layout/views'
+import { SectionCards } from '@museumwnf/viewer-layout/content'
 import { artIntroRoot, artIntroTree } from '../composables/artIntro.js'
 import { useInventoryData } from '../composables/useInventoryData.js'
 

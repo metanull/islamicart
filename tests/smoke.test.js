@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
-import { loadEntities, mergeMessages } from '@metanull/viewer-core'
-import { checkOfferedLanguages, checkRoutes, checkSectionMeta, checkTextsRendered, mountSite as mountOn } from '@metanull/viewer-core/testing'
-import { catalogues as sharedTexts } from '@metanull/viewer-i18n/standalone'
+import { loadEntities, mergeMessages } from '@museumwnf/viewer-core'
+import { checkOfferedLanguages, checkRoutes, checkSectionMeta, checkTextsRendered, mountSite as mountOn } from '@museumwnf/viewer-core/testing'
+import { catalogues as sharedTexts } from '@museumwnf/viewer-i18n/standalone'
 import ownTexts from '../locales/en.json'
 import config from '../src/dataset.config.js'
 import { useInventoryData } from '../src/composables/useInventoryData.js'
@@ -102,8 +102,8 @@ describe('website smoke test', () => {
     expect(action.getAttribute('href')).toContain('country=deu')
 
     // The first row's date and description text match the fixture event.
-    const { default: timelineEventsData } = await import('@metanull/islamicart-data/timeline_events.json', { assert: { type: 'json' } })
-    const { default: timelineEventsTrans } = await import('@metanull/islamicart-data/translations/timeline_events.en.json', { assert: { type: 'json' } })
+    const { default: timelineEventsData } = await import('@museumwnf/islamicart-data/timeline_events.json', { assert: { type: 'json' } })
+    const { default: timelineEventsTrans } = await import('@museumwnf/islamicart-data/translations/timeline_events.en.json', { assert: { type: 'json' } })
     const firstDeuEvent = timelineEventsData.find((evt) => evt.country_id === 'deu')
     if (firstDeuEvent && timelineEventsTrans[firstDeuEvent.id]) {
       const trans = timelineEventsTrans[firstDeuEvent.id]
@@ -432,7 +432,7 @@ describe('website smoke test', () => {
     // translated title from the collections entity, not the internal_name.
     // The view reads these texts through the tree's own entity, and a wrong
     // entity renders internal names silently.
-    const { default: collectionsTranslations } = await import('@metanull/islamicart-data/translations/collections.en.json', { assert: { type: 'json' } })
+    const { default: collectionsTranslations } = await import('@museumwnf/islamicart-data/translations/collections.en.json', { assert: { type: 'json' } })
     const themeTranslation = collectionsTranslations[theme.id]
     const essayTitle = host.querySelector('.mwnf-essay__title')
     expect(essayTitle?.textContent.trim()).toBe(themeTranslation?.title ?? theme.internal_name)
@@ -522,7 +522,7 @@ describe('website smoke test', () => {
     // translated title from the collections entity, not the internal_name.
     // The view reads these texts through the tree's own entity, and a wrong
     // entity renders internal names silently.
-    const { default: collectionsTranslations } = await import('@metanull/islamicart-data/translations/collections.en.json', { assert: { type: 'json' } })
+    const { default: collectionsTranslations } = await import('@museumwnf/islamicart-data/translations/collections.en.json', { assert: { type: 'json' } })
     const themeTranslation = collectionsTranslations[theme.id]
     const essayTitle = host.querySelector('.mwnf-essay__title')
     expect(essayTitle?.textContent.trim()).toBe(themeTranslation?.title ?? theme.internal_name)
@@ -575,7 +575,7 @@ describe('website smoke test', () => {
   // an object: `byId(...)[id]` reads as undefined rather than failing, so a
   // page would simply render nothing. This is where that shows.
   it('resolves a record through the shared index', async () => {
-    const { loadEntities } = await import('@metanull/viewer-core')
+    const { loadEntities } = await import('@museumwnf/viewer-core')
     const { itemById } = useInventoryData()
     const [items] = await loadEntities(['items'])
     expect(itemById.value).toBeInstanceOf(Map)
@@ -616,7 +616,7 @@ describe('website smoke test', () => {
     // manifest.rights names a holder, viewer-layout's SiteShell renders it
     // unasked — the sentence and the terms link are the package's own facts,
     // not this website's.
-    const { default: manifest } = await import('@metanull/islamicart-data/manifest.json', { assert: { type: 'json' } })
+    const { default: manifest } = await import('@museumwnf/islamicart-data/manifest.json', { assert: { type: 'json' } })
     const attribution = host.querySelector('.mwnf-footer__attribution')
     expect(attribution).not.toBeNull()
     expect(attribution.textContent).toContain(manifest.rights.attribution)

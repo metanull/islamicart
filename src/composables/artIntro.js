@@ -1,5 +1,5 @@
 import { computed } from 'vue'
-import { useCollectionTree } from '@metanull/viewer-core'
+import { useCollectionTree } from '@museumwnf/viewer-core'
 import { useInventoryData } from './useInventoryData.js'
 
 // The Artistic Introduction tree: a purpose marker

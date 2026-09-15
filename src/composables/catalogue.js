@@ -1,5 +1,5 @@
 import { computed } from 'vue'
-import { useI18n } from '@metanull/viewer-core'
+import { useI18n } from '@museumwnf/viewer-core'
 import { useInventoryData } from './useInventoryData.js'
 
 // The catalogue spec: what this website's lists filter and search on. The
