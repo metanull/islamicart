@@ -36,7 +36,7 @@ export default {
   // (`BASE_PATH`, set by the deploy workflow from the repo name), so the two
   // must be kept in step if the site ever moves off GitHub Pages.
   site: {
-    origin: 'https://metanull.github.io/islamicart',
+    origin: 'https://museumwithnofrontiers.github.io/islamicart',
   },
 
   // All pages are website-specific views (below) — no generic entity pages.
