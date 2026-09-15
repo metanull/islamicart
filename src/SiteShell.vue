@@ -8,9 +8,9 @@
 // `update:language` — passes straight through.
 //
 // Exported from `/components`, not the package root (it reads
-// `@metanull/viewer-core` itself); the Vitest config lists `viewer-layout`
+// `@museumwnf/viewer-core` itself); the Vitest config lists `viewer-layout`
 // in `server.deps.inline` for the same reason.
-import { SiteShell } from '@metanull/viewer-layout/components'
+import { SiteShell } from '@museumwnf/viewer-layout/components'
 </script>
 
 <template>

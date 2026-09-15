@@ -1,8 +1,8 @@
 <script setup>
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { useI18n } from '@metanull/viewer-core'
-import { PartnerListView } from '@metanull/viewer-layout/views'
+import { useI18n } from '@museumwnf/viewer-core'
+import { PartnerListView } from '@museumwnf/viewer-layout/views'
 import { partnersResults } from '../composables/partner.js'
 
 // The partner results page is the platform's composed partner list,

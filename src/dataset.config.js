@@ -1,4 +1,4 @@
-import { languageLabels, offeredLanguages, sectionMeta, useDataPackage } from '@metanull/viewer-core'
+import { languageLabels, offeredLanguages, sectionMeta, useDataPackage } from '@museumwnf/viewer-core'
 import SiteShell from './SiteShell.vue'
 
 // The whole declaration of this website. Before it mounts, the website reads
@@ -24,7 +24,7 @@ const meta = sectionMeta()
 export default {
   // The dataset package this website renders. Must match the alias in
   // vite.config.js and the dependency in package.json.
-  datasetPackage: '@metanull/islamicart-data',
+  datasetPackage: '@museumwnf/islamicart-data',
 
   siteName: manifest.site?.names?.en ?? 'Islamic Art',
 
